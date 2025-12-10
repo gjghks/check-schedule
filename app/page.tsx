@@ -1,66 +1,64 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+import { getAvailableDates, getSchedulesRange } from '@/lib/db';
+import ScheduleDashboard from '@/components/ScheduleDashboard';
+import { Center, Title } from '@mantine/core';
+import dayjs from 'dayjs';
+import 'dayjs/locale/ko';
 
-export default function Home() {
+export const dynamic = 'force-dynamic';
+
+export default async function Page({ searchParams }: { searchParams: Promise<{ date?: string }> }) {
+  const availableDates = await getAvailableDates();
+  const { date } = await searchParams;
+
+  console.log('Page SearchParams:', { date });
+
+  // Default logic:
+  // If date param exists, use it.
+  // Else if available availableDates, search for "today" in them.
+  // If not found, use the last Available Date.
+
+  const todayRaw = new Date();
+  const todayStr = dayjs(todayRaw).format('YYYY/MM/DD');
+
+  let anchorDate = date;
+  if (!anchorDate) {
+    anchorDate = availableDates.includes(todayStr) ? todayStr : (availableDates.length > 0 ? availableDates[availableDates.length - 1] : todayStr);
+  }
+
+  console.log('Anchor Date:', anchorDate);
+
+  // Calculate Week Range (Mon - Sun)
+  // Note: Data format is YYYY/MM/DD.
+  const anchor = dayjs(anchorDate?.replace(/\//g, '-') || new Date()); // format to YYYY-MM-DD for dayjs parsing
+
+  // Calculate Monday and Sunday
+  // Dayjs .day(1) is Monday, .day(0) is Sunday of *current* week?
+  // dayjs().day(1) sets to Monday of this week.
+  // Exception: if today is Sunday (day 0), and we want "Mon-Sun" where Sunday is the *end*.
+  // dayjs considers Sunday as day 0 (start of week) in some locales, or end in others.
+  // 'ko' locale: Monday is start.
+
+  // Force "Monday" as start.
+  // dayjs().day(1) is Monday.
+  // If today is Sunday (0), we need previous Monday (-6 days).
+  // If today is Monday (1), we need today (0 days).
+  const dayIndex = anchor.day();
+  const diffToMon = dayIndex === 0 ? -6 : 1 - dayIndex;
+
+  const monday = anchor.add(diffToMon, 'day');
+  const sunday = monday.add(6, 'day');
+
+  const startDateStr = monday.format('YYYY/MM/DD');
+  const endDateStr = sunday.format('YYYY/MM/DD');
+
+  const schedules = await getSchedulesRange(startDateStr, endDateStr);
+
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className={styles.intro}>
-          <h1>To get started, edit the page.tsx file.</h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+    <ScheduleDashboard
+      schedules={schedules}
+      availableDates={availableDates}
+      currentDate={anchorDate || '2025/11/27'}
+      weekRange={{ start: startDateStr, end: endDateStr }}
+    />
   );
 }
