@@ -270,13 +270,33 @@ export default function CompetitorPivot({ schedules }: Props) {
     }, [filteredData]);
 
     // 5. Sorted Columns (Only visible broadcasters based on selection OR data?)
-    // User interface says columns are broadcasters. We should show ALL selected broadcasters.
     const columns = useMemo(() => {
         const list = uniqueValues.broadcasters;
         if (!selectedFilters[KEY_BROADCASTER]) return list;
         return list.filter(b => selectedFilters[KEY_BROADCASTER].has(b));
     }, [uniqueValues.broadcasters, selectedFilters]);
 
+    // 7. Calculate Top 5 Mids for Ranking
+    const top5Mids = useMemo(() => {
+        const midTotals: { name: string, total: number }[] = [];
+        tree.forEach((node) => {
+            // Calculate total for visible columns only
+            const total = columns.reduce((acc, col) => acc + (node.values[col] || 0), 0);
+            midTotals.push({ name: node.name, total });
+        });
+
+        // Sort descending
+        midTotals.sort((a, b) => b.total - a.total);
+
+        // Take top 5 and map to rank (1-based)
+        const rankMap = new Map<string, number>();
+        midTotals.slice(0, 5).forEach((item, index) => {
+            if (item.total > 0) { // Only rank if total > 0
+                rankMap.set(item.name, index + 1);
+            }
+        });
+        return rankMap;
+    }, [tree, columns]);
 
     // 6. Expansion State
     const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -300,16 +320,40 @@ export default function CompetitorPivot({ schedules }: Props) {
 
             const hasChildren = !node.isLeaf && node.children && node.children.size > 0;
 
+            // Ranking Logic (Only for Level 0)
+            const rank = (level === 0) ? top5Mids.get(node.name) : undefined;
+            let rowBg = level === 0 ? '#f8f9fa' : (level === 1 ? '#fff' : '#fafafa'); // Default
+            let badge = null;
+
+            if (rank) {
+                if (rank === 1) {
+                    rowBg = '#fff9db';
+                    badge = <Badge color="yellow" variant="filled" size="xs" circle style={{ width: 16, height: 16, minWidth: 16, padding: 0 }}>{rank}</Badge>;
+                }
+                else if (rank === 2) {
+                    rowBg = '#f1f3f5';
+                    badge = <Badge color="gray" variant="filled" size="xs" circle style={{ width: 16, height: 16, minWidth: 16, padding: 0 }}>{rank}</Badge>;
+                }
+                else if (rank === 3) {
+                    rowBg = '#fff4e6';
+                    badge = <Badge color="orange" variant="filled" size="xs" circle style={{ width: 16, height: 16, minWidth: 16, padding: 0 }}>{rank}</Badge>;
+                }
+                else {
+                    badge = <Badge color="blue" variant="filled" size="xs" circle style={{ width: 16, height: 16, minWidth: 16, padding: 0 }}>{rank}</Badge>;
+                }
+            }
+
             return (
                 <MantineFragment key={id}>
-                    <Table.Tr bg={level === 0 ? '#f8f9fa' : (level === 1 ? '#fff' : '#fafafa')}>
+                    <Table.Tr bg={rowBg}>
                         <Table.Td style={{ paddingLeft: indent + 10 }}>
-                            <Group gap={4} wrap="nowrap">
+                            <Group gap={8} wrap="nowrap">
                                 {hasChildren && (
                                     <UnstyledButton onClick={() => toggleExpand(id)}>
                                         {isExpanded ? <IconChevronDown size={14} /> : <IconChevronRight size={14} />}
                                     </UnstyledButton>
                                 )}
+                                {badge && <Box style={{ display: 'flex' }}>{badge}</Box>}
                                 <Text size="sm" fw={level === 0 ? 700 : (level === 1 ? 500 : 400)}>
                                     {node.name}
                                 </Text>
@@ -323,7 +367,7 @@ export default function CompetitorPivot({ schedules }: Props) {
                                 </Table.Td>
                             );
                         })}
-                        <Table.Td style={{ textAlign: 'right', fontWeight: 700, backgroundColor: '#f9f9f9' }}>
+                        <Table.Td style={{ textAlign: 'right', fontWeight: 700, backgroundColor: rank ? 'transparent' : '#f9f9f9' }}>
                             {(() => {
                                 const total = columns.reduce((acc, col) => acc + (node.values[col] || 0), 0);
                                 return total === 0 ? '-' : total.toFixed(2);
@@ -339,7 +383,7 @@ export default function CompetitorPivot({ schedules }: Props) {
     // Global Filter Bar (Product & MD)
     // "상단에 배치"
     return (
-        <Stack gap="md" align="stretch">
+        <Stack gap="sm" align="stretch" style={{ height: '100%', overflow: 'hidden' }}>
             {/* Global Filters */}
             <Group>
                 <Box style={{ width: 200 }}>
@@ -360,11 +404,11 @@ export default function CompetitorPivot({ schedules }: Props) {
                 </Box>
             </Group>
 
-            <ScrollArea>
+            <ScrollArea style={{ flex: 1 }} type="auto">
                 <Table withTableBorder withColumnBorders highlightOnHover>
                     <Table.Thead>
                         <Table.Tr>
-                            <Table.Th style={{ width: 300 }}>
+                            <Table.Th style={{ width: 300, position: 'sticky', top: 0, zIndex: 10, backgroundColor: '#f9f9f9' }}>
                                 <Group gap={0} wrap="nowrap" align="center">
                                     <Box style={{ flex: 1, minWidth: 0 }}>
                                         <FilterHeader
@@ -397,11 +441,11 @@ export default function CompetitorPivot({ schedules }: Props) {
                                 </Group>
                             </Table.Th>
                             {columns.map(col => (
-                                <Table.Th key={col} style={{ textAlign: 'center', minWidth: 100 }}>
+                                <Table.Th key={col} style={{ textAlign: 'center', minWidth: 100, position: 'sticky', top: 0, zIndex: 10, backgroundColor: '#f9f9f9' }}>
                                     <Text size="sm">{col}</Text>
                                 </Table.Th>
                             ))}
-                            <Table.Th style={{ textAlign: 'center', minWidth: 100, backgroundColor: '#f9f9f9' }}>
+                            <Table.Th style={{ textAlign: 'center', minWidth: 100, backgroundColor: '#f9f9f9', position: 'sticky', top: 0, zIndex: 10 }}>
                                 <Text size="sm" fw={700}>분류별 가중시 합계</Text>
                             </Table.Th>
                         </Table.Tr>

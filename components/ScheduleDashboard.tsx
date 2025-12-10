@@ -259,16 +259,16 @@ export default function ScheduleDashboard({ schedules, availableDates, currentDa
 
             <AppShell.Main>
                 {/* 1. Competitor Schedule Analysis Tab Content */}
-                <Box style={{ display: activeTab === 'competitor' ? 'block' : 'none', padding: '10px 20px 20px 20px' }}>
+                <Box style={{ display: activeTab === 'competitor' ? 'flex' : 'none', flexDirection: 'column', height: 'calc(100vh - 110px)', padding: '10px 20px 20px 20px' }}>
                     <CompetitorPivot schedules={schedules} />
                 </Box>
 
                 {/* 2. Weekly Schedule Analysis Tab Content */}
-                <Box style={{ display: activeTab === 'weekly' ? 'block' : 'none', paddingTop: 10 }}>
-                    <Box style={{ overflowX: 'auto', paddingBottom: 20, paddingLeft: 20, paddingRight: 20 }}>
+                <Box style={{ display: activeTab === 'weekly' ? 'flex' : 'none', flexDirection: 'column', height: 'calc(100vh - 110px)', paddingTop: 10 }}>
+                    <Box style={{ overflow: 'auto', flex: 1, paddingBottom: 20, paddingLeft: 20, paddingRight: 20 }}>
                         <Box style={{ minWidth: 1000, display: 'flex', flexDirection: 'column' }}>
                             {/* Header Row (Time + Mon-Sun) */}
-                            <Box style={{ display: 'flex' }}>
+                            <Box style={{ display: 'flex', position: 'sticky', top: 0, zIndex: 10, backgroundColor: 'white' }}>
                                 <Box style={{ width: 60, flexShrink: 0, padding: '4px 0', textAlign: 'center', borderRight: '1px solid #eee', borderBottom: '2px solid #ddd', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                     <Text fw={700} size="sm">시간대</Text>
                                 </Box>
