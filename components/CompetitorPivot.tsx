@@ -81,7 +81,7 @@ const FilterHeader = ({ label, values, selected, onChange }: FilterHeaderProps) 
     };
 
     return (
-        <Group gap={4} wrap="nowrap" justify="space-between" style={{ width: '100%' }}>
+        <Group gap={4} wrap="nowrap" justify="flex-start" style={{ width: '100%' }}>
             <Text fw={700} size="sm">{label}</Text>
             <Popover opened={opened} onChange={setOpened} width={250} position="bottom-end" shadow="md">
                 <Popover.Target>
@@ -167,16 +167,31 @@ export default function CompetitorPivot({ schedules }: Props) {
     // Initialize state if empty
     useMemo(() => {
         if (Object.keys(selectedFilters).length === 0 && schedules.length > 0) {
+            // Filter Mids: Only those with valid Small AND Brand
+            const validMids = new Set<string>();
+            schedules.forEach(row => {
+                const raw = JSON.parse(row.raw_data || '{}');
+                const mid = raw[KEY_MID] || '(없음)';
+                const small = raw[KEY_SMALL]; // Check raw existence
+                const brand = raw[KEY_BRAND];
+                if (small && brand) {
+                    validMids.add(mid);
+                }
+            });
+
+            // Note: If validMids is empty (weird?), maybe fallback to all? 
+            // The requirement implies filtering. If none, none checked.
+
             setSelectedFilters({
                 [KEY_BROADCASTER]: new Set(uniqueValues.broadcasters),
-                [KEY_MID]: new Set(uniqueValues.mids),
+                [KEY_MID]: validMids,
                 [KEY_SMALL]: new Set(uniqueValues.smalls),
                 [KEY_BRAND]: new Set(uniqueValues.brands),
                 [KEY_PRODUCT]: new Set(uniqueValues.products),
                 [KEY_MD]: new Set(uniqueValues.mds),
             });
         }
-    }, [uniqueValues, schedules.length]); // Wait for uniqueValues
+    }, [uniqueValues, schedules]); // Wait for uniqueValues
 
     // Handle Change
     const handleFilterChange = (key: string, set: Set<string>) => {
@@ -350,35 +365,35 @@ export default function CompetitorPivot({ schedules }: Props) {
                     <Table.Thead>
                         <Table.Tr>
                             <Table.Th style={{ width: 300 }}>
-                                <Group justify="space-between">
-                                    <Group gap={8}>
-                                        <Text size="sm" fw={700}>중분류</Text>
-                                        <IconChevronRight size={12} style={{ opacity: 0.5 }} />
-                                        <Text size="sm" fw={700}>소분류</Text>
-                                        <IconChevronRight size={12} style={{ opacity: 0.5 }} />
-                                        <Text size="sm" fw={700}>브랜드</Text>
-                                    </Group>
-                                    {/* Filters for Rows */}
-                                    <Group gap={4}>
+                                <Group gap={0} wrap="nowrap" align="center">
+                                    <Box style={{ flex: 1, minWidth: 0 }}>
                                         <FilterHeader
-                                            label=""
+                                            label="중분류"
                                             values={uniqueValues.mids}
                                             selected={selectedFilters[KEY_MID] || new Set()}
                                             onChange={(s) => handleFilterChange(KEY_MID, s)}
                                         />
+                                    </Box>
+                                    <IconChevronRight size={12} style={{ opacity: 0.5, margin: '0 2px', flexShrink: 0 }} />
+
+                                    <Box style={{ flex: 1, minWidth: 0 }}>
                                         <FilterHeader
-                                            label=""
+                                            label="소분류"
                                             values={uniqueValues.smalls}
                                             selected={selectedFilters[KEY_SMALL] || new Set()}
                                             onChange={(s) => handleFilterChange(KEY_SMALL, s)}
                                         />
+                                    </Box>
+                                    <IconChevronRight size={12} style={{ opacity: 0.5, margin: '0 2px', flexShrink: 0 }} />
+
+                                    <Box style={{ flex: 1, minWidth: 0 }}>
                                         <FilterHeader
-                                            label=""
+                                            label="브랜드"
                                             values={uniqueValues.brands}
                                             selected={selectedFilters[KEY_BRAND] || new Set()}
                                             onChange={(s) => handleFilterChange(KEY_BRAND, s)}
                                         />
-                                    </Group>
+                                    </Box>
                                 </Group>
                             </Table.Th>
                             {columns.map(col => (
@@ -387,7 +402,7 @@ export default function CompetitorPivot({ schedules }: Props) {
                                 </Table.Th>
                             ))}
                             <Table.Th style={{ textAlign: 'center', minWidth: 100, backgroundColor: '#f9f9f9' }}>
-                                <Text size="sm" fw={700}>합계</Text>
+                                <Text size="sm" fw={700}>분류별 가중시 합계</Text>
                             </Table.Th>
                         </Table.Tr>
                     </Table.Thead>
@@ -401,6 +416,32 @@ export default function CompetitorPivot({ schedules }: Props) {
                             </Table.Tr>
                         )}
                     </Table.Tbody>
+                    <Table.Tfoot>
+                        <Table.Tr style={{ backgroundColor: '#f1f3f5', borderTop: '2px solid #dee2e6' }}>
+                            <Table.Td style={{ fontWeight: 800, textAlign: 'center' }}>
+                                방송사별 가중시 합계
+                            </Table.Td>
+                            {columns.map(col => {
+                                const total = filteredData
+                                    .filter(r => (r.other_broad_name || '(없음)') === col)
+                                    .reduce((acc, r) => acc + ((r.weights_time || 0) / 60), 0);
+                                return (
+                                    <Table.Td key={col} style={{ textAlign: 'right', fontWeight: 700 }}>
+                                        {total === 0 ? '-' : total.toFixed(2)}
+                                    </Table.Td>
+                                );
+                            })}
+                            <Table.Td style={{ textAlign: 'right', fontWeight: 800 }}>
+                                {(() => {
+                                    const colSet = new Set(columns);
+                                    const total = filteredData
+                                        .filter(r => colSet.has(r.other_broad_name || '(없음)'))
+                                        .reduce((acc, r) => acc + ((r.weights_time || 0) / 60), 0);
+                                    return total === 0 ? '-' : total.toFixed(2);
+                                })()}
+                            </Table.Td>
+                        </Table.Tr>
+                    </Table.Tfoot>
                 </Table>
             </ScrollArea>
         </Stack>
