@@ -31,9 +31,9 @@ interface Props {
 const KEY_BROADCASTER = 'other_broad_name'; // Column
 const KEY_MID = 'OTHER_MGROUPN_NAME'; // Row 1 (from raw)
 const KEY_SMALL = 'OTHER_SGROUPN_NAME'; // Row 2 (from raw)
-const KEY_BRAND = 'BRAND_NAME'; // Row 3 (from raw)
+const KEY_BRAND = 'OTHER_BRAND_NAME'; // Row 3 (from raw)
 const KEY_PRODUCT = 'OTHER_PRODUCT_NAME'; // Filter (from raw or col) - Use col 'other_product_name'
-const KEY_MD = 'MD_NAME'; // Filter (from raw) - Use raw
+const KEY_MD = 'OTHER_MD_NAME_1'; // Filter (from raw) - Use raw
 
 // Helper to get value
 const getValue = (row: ScheduleRow, key: string, isRaw: boolean): string => {

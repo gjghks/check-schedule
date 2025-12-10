@@ -16,7 +16,8 @@ import {
     Tooltip,
     Card,
     Tabs,
-    Button
+    Button,
+    SegmentedControl
 } from '@mantine/core';
 import { DatePickerInput } from '@mantine/dates';
 import { IconBell, IconCalendar, IconChevronLeft, IconChevronRight, IconChevronDown, IconChevronUp } from '@tabler/icons-react';
@@ -69,6 +70,7 @@ export default function ScheduleDashboard({ schedules, availableDates, currentDa
     const [selectedItemState, setSelectedItemState] = useState<{ item: ScheduleRow, isShinsegae: boolean } | null>(null);
     const [modalOpened, { open: openModal, close: closeModal }] = useDisclosure(false);
     const [activeTab, setActiveTab] = useState<string | null>('competitor');
+    const [weeklySubTab, setWeeklySubTab] = useState<'duplicate' | 'all'>('duplicate');
 
     // Range Picker State for Competitor Tab
     const [rangeValue, setRangeValue] = useState<[Date | null, Date | null]>([
@@ -221,6 +223,18 @@ export default function ScheduleDashboard({ schedules, availableDates, currentDa
 
                     <Box pb={4}>
                         <Group>
+                            {activeTab === 'weekly' && (
+                                <SegmentedControl
+                                    value={weeklySubTab}
+                                    onChange={(v) => setWeeklySubTab(v as any)}
+                                    data={[
+                                        { label: '중복', value: 'duplicate' },
+                                        { label: '상세', value: 'all' },
+                                    ]}
+                                    size="xs"
+                                    mr="xs"
+                                />
+                            )}
                             <Button variant="default" size="sm" onClick={handleTodayClick}>오늘</Button>
                             {activeTab === 'competitor' ? (
                                 <DatePickerInput
@@ -318,10 +332,15 @@ export default function ScheduleDashboard({ schedules, availableDates, currentDa
                                                 }
                                             });
 
+                                            // Sub-tab Filtering (Duplicate vs All)
+                                            const finalEntries = (activeTab === 'weekly' && weeklySubTab === 'duplicate')
+                                                ? uniqueEntries.filter(e => !e.isShinsegae && ((e.item.sche_sml_score >= 6) || (e.item.item_sml_score >= 1.5) || (e.item.comp_alert && e.item.comp_alert.trim() !== '')))
+                                                : uniqueEntries;
+
                                             return (
                                                 <ScheduleCell
                                                     key={d.date}
-                                                    entries={uniqueEntries}
+                                                    entries={finalEntries}
                                                     onCardClick={(entry) => {
                                                         setSelectedItemState(entry);
                                                         openModal();
