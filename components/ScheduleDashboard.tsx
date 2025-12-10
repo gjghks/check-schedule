@@ -376,27 +376,15 @@ export default function ScheduleDashboard({ schedules, availableDates, currentDa
                                 />
                             </Box>
 
-                            <Group>
-                                <Text c="dimmed" size="xs">유사도 점수</Text>
-                                <Badge color={isAlert ? 'red' : 'gray'}>
-                                    {selectedItem.sche_sml_score.toFixed(1)} / 10
-                                </Badge>
-                            </Group>
 
-                            <Group>
-                                <Text c="dimmed" size="xs">상품 유사 점수</Text>
-                                <Badge color={selectedItem.item_sml_score >= 1.5 ? 'red' : 'gray'}>
-                                    {selectedItem.item_sml_score !== undefined ? selectedItem.item_sml_score : '?'} / 2
-                                </Badge>
-                            </Group>
 
                             {isAlert && (
                                 <Box p="xs" bg="red.0" style={{ border: '1px solid #ffd8d8', borderRadius: 4 }}>
                                     <Group gap="xs">
                                         <IconBell size={16} color="red" />
-                                        <Text size="sm" fw={700} c="red">알림 발생</Text>
+                                        <Text size="sm" fw={700} c="red">유사도 알림 발생</Text>
                                     </Group>
-                                    <Text size="sm" mt={4}>{selectedItem.comp_alert || '유사도 기준(6점 or 1.5점)을 초과하여 알림이 발생했습니다.'}</Text>
+                                    <Text size="sm" mt={4}>{selectedItem.comp_alert}</Text>
                                 </Box>
                             )}
                         </Stack>
