@@ -6,11 +6,11 @@ import 'dayjs/locale/ko';
 
 export const dynamic = 'force-dynamic';
 
-export default async function Page({ searchParams }: { searchParams: Promise<{ date?: string }> }) {
+export default async function Page({ searchParams }: { searchParams: Promise<{ date?: string, start?: string, end?: string }> }) {
   const availableDates = await getAvailableDates();
-  const { date } = await searchParams;
+  const { date, start, end } = await searchParams;
 
-  console.log('Page SearchParams:', { date });
+  console.log('Page SearchParams:', { date, start, end });
 
   // Default logic:
   // If date param exists, use it.
@@ -25,40 +25,42 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ d
     anchorDate = availableDates.includes(todayStr) ? todayStr : (availableDates.length > 0 ? availableDates[availableDates.length - 1] : todayStr);
   }
 
-  console.log('Anchor Date:', anchorDate);
-
-  // Calculate Week Range (Mon - Sun)
-  // Note: Data format is YYYY/MM/DD.
-  const anchor = dayjs(anchorDate?.replace(/\//g, '-') || new Date()); // format to YYYY-MM-DD for dayjs parsing
-
-  // Calculate Monday and Sunday
-  // Dayjs .day(1) is Monday, .day(0) is Sunday of *current* week?
-  // dayjs().day(1) sets to Monday of this week.
-  // Exception: if today is Sunday (day 0), and we want "Mon-Sun" where Sunday is the *end*.
-  // dayjs considers Sunday as day 0 (start of week) in some locales, or end in others.
-  // 'ko' locale: Monday is start.
-
-  // Force "Monday" as start.
-  // dayjs().day(1) is Monday.
-  // If today is Sunday (0), we need previous Monday (-6 days).
-  // If today is Monday (1), we need today (0 days).
+  // Calculate Week Range (Mon - Sun) for Tab 2
+  const anchor = dayjs(anchorDate?.replace(/\//g, '-') || new Date());
   const dayIndex = anchor.day();
   const diffToMon = dayIndex === 0 ? -6 : 1 - dayIndex;
 
   const monday = anchor.add(diffToMon, 'day');
   const sunday = monday.add(6, 'day');
 
-  const startDateStr = monday.format('YYYY/MM/DD');
-  const endDateStr = sunday.format('YYYY/MM/DD');
+  const weekStartStr = monday.format('YYYY/MM/DD');
+  const weekEndStr = sunday.format('YYYY/MM/DD');
 
-  const schedules = await getSchedulesRange(startDateStr, endDateStr);
+  // Determine Fetch Range
+  // If start and end are provided (Tab 1 Range Mode), fetch that range.
+  // Else fetch the week range (Tab 2 Default Mode).
+  // Note: ScheduleDashboard will receive data.
+  // We want to fetch the "Union" if possible, or just the requested range.
+  // If user requested a custom range, we return that. Tab 2 might show partial data if the custom range doesn't cover the full week.
+  // But usually user selects range for Pivot.
+
+  let fetchStart = weekStartStr;
+  let fetchEnd = weekEndStr;
+
+  if (start && end) {
+    fetchStart = start;
+    fetchEnd = end;
+  }
+
+  const schedules = await getSchedulesRange(fetchStart, fetchEnd);
 
   return (
     <ScheduleDashboard
       schedules={schedules}
       availableDates={availableDates}
       currentDate={anchorDate || '2025/11/27'}
-      weekRange={{ start: startDateStr, end: endDateStr }}
+      weekRange={{ start: weekStartStr, end: weekEndStr }}
+      viewRange={{ start: fetchStart, end: fetchEnd }}
     />
   );
 }

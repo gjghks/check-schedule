@@ -31,6 +31,7 @@ export interface ScheduleRow {
     raw_data: string;
     other_etime?: string;
     product_sale_price?: number;
+    weights_time?: number;
 }
 
 export async function getSchedulesByDate(dateStr: string): Promise<ScheduleRow[]> {
