@@ -14,10 +14,11 @@ import {
     Divider,
     Title,
     Tooltip,
-    Card
+    Card,
+    Tabs
 } from '@mantine/core';
 import { DatePickerInput } from '@mantine/dates';
-import { IconBell, IconCalendar, IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
+import { IconBell, IconCalendar, IconChevronLeft, IconChevronRight, IconChevronDown, IconChevronUp } from '@tabler/icons-react';
 import { useRouter } from 'next/navigation';
 import { useDisclosure } from '@mantine/hooks';
 import dayjs from 'dayjs';
@@ -53,17 +54,213 @@ const parseTime = (timeStr: string | undefined | null): number => {
     return parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
 };
 
+// --- Sub Components ---
+
+interface ScheduleCardProps {
+    entry: { isShinsegae: boolean, item: ScheduleRow };
+    onClick: (entry: { isShinsegae: boolean, item: ScheduleRow }) => void;
+}
+
+const ScheduleCard = ({ entry, onClick }: ScheduleCardProps) => {
+    const { isShinsegae, item } = entry;
+    const raw = JSON.parse(item.raw_data || '{}');
+
+    // Fields
+    const productName = isShinsegae ? (raw.G_PROG_NAME || '방송정보없음') : item.other_product_name;
+    const channelName = isShinsegae ? 'Shinsegae' : item.other_broad_name;
+    const channelInfo = CHANNELS.find(c => c.name === channelName) || (isShinsegae ? CHANNELS[0] : null);
+    const channelLabel = channelInfo?.label || (isShinsegae ? '신세계' : channelName);
+
+    const startTime = isShinsegae ? item.bd_btime : item.other_btime;
+    const endTime = isShinsegae ? item.bd_etime : (item.other_etime || raw.OTHER_ETIME || '??:??');
+
+    const displayTimeStart = startTime?.substring(0, 5);
+    const displayTimeEnd = endTime?.substring(0, 5);
+
+    // Calc Duration
+    let duration = 0;
+    const s = parseTime(startTime);
+    const e = parseTime(endTime);
+    if (s > 0 && e > 0) {
+        duration = e - s;
+        if (duration < 0) duration += 1440;
+    }
+
+    const category = isShinsegae ? raw.MD_NAME : (raw.OTHER_MD_NAME_1 || raw.OTHER_MD_NAME_2);
+
+    // Colors etc
+    const logoColor = channelInfo?.color || 'gray';
+    const logoLabel = channelInfo?.label || (isShinsegae ? 'S' : 'OT');
+
+    const isAlert = !isShinsegae && ((item.sche_sml_score >= 6) || (item.item_sml_score >= 1.5));
+    const showBell = isAlert || (item.comp_alert && item.comp_alert.trim() !== '');
+
+    const price = item.product_sale_price || raw.PRODUCT_SALE_PRICE || 0;
+
+    const tooltipLabel = (
+        <div style={{ textAlign: 'left' }}>
+            <div>{channelLabel} | {duration}분</div>
+            <div>{productName}</div>
+            {price > 0 && <div>[판매가] {price.toLocaleString()}</div>}
+        </div>
+    );
+
+    return (
+        <Tooltip label={tooltipLabel} key={`${item.id}-${isShinsegae ? 'S' : 'C'}`} withArrow multiline>
+            <Card
+                padding={4}
+                radius="sm"
+                withBorder
+                onClick={(e) => { e.stopPropagation(); onClick(entry); }}
+                style={{
+                    marginBottom: 4,
+                    cursor: 'pointer',
+                    backgroundColor: isAlert ? '#ffe3e3' : 'white',
+                    borderColor: isAlert ? '#ffc9c9' : '#eee',
+                }}
+            >
+                {/* Header: Logo + Time */}
+                <Group gap={4} wrap="nowrap" mb={2}>
+                    <Badge
+                        size="xs"
+                        variant="filled"
+                        color={logoColor}
+                        radius="xs"
+                        style={{ minWidth: 24, padding: 0, justifyContent: 'center', height: 16, fontSize: 9 }}
+                    >
+                        {logoLabel}
+                    </Badge>
+                    <Text size="xs" fw={700} style={{ fontSize: '10px' }}>
+                        {displayTimeStart} ~ {displayTimeEnd}
+                    </Text>
+                </Group>
+
+                {/* Body: Cat | Name */}
+                <Text size="xs" style={{ fontSize: '10px', lineHeight: 1.2 }} lineClamp={2}>
+                    {showBell && <IconBell size={8} color="red" style={{ marginRight: 2, verticalAlign: 'middle' }} />}
+                    <Text span fw={700} c="dimmed">{category}</Text>
+                    <Text span c="dimmed" mx={2}>|</Text>
+                    {productName}
+                </Text>
+            </Card>
+        </Tooltip>
+    );
+};
+
+interface ScheduleCellProps {
+    entries: { isShinsegae: boolean, item: ScheduleRow }[];
+    onCardClick: (entry: { isShinsegae: boolean, item: ScheduleRow }) => void;
+}
+
+const ScheduleCell = ({ entries, onCardClick }: ScheduleCellProps) => {
+    const [expanded, setExpanded] = useState(false);
+
+    // Sort by Time first
+    const sortedEntries = useMemo(() => {
+        return [...entries].sort((a, b) => {
+            const tA = parseTime(a.isShinsegae ? a.item.bd_btime : a.item.other_btime);
+            const tB = parseTime(b.isShinsegae ? b.item.bd_btime : b.item.other_btime);
+            return tA - tB;
+        });
+    }, [entries]);
+
+    // Visiblity Logic
+    // Limit: 3
+    // Alert items MUST show
+    const MAX_VISIBLE = 3;
+
+    // Filter items to show in collapsed state
+    const visibleEntries = useMemo(() => {
+        if (expanded || sortedEntries.length <= MAX_VISIBLE) return sortedEntries;
+
+        const alertItems = sortedEntries.filter(e => {
+            const { isShinsegae, item } = e;
+            return !isShinsegae && ((item.sche_sml_score >= 6) || (item.item_sml_score >= 1.5) || (item.comp_alert && item.comp_alert.trim() !== ''));
+        });
+
+        // Use a set to track items already selected
+        const selectedSet = new Set(alertItems);
+
+        // Fill remaining slots
+        let remaining = MAX_VISIBLE - selectedSet.size;
+        if (remaining < 0) remaining = 0; // If alerts > MAX, we just show all alerts, no normal items (unless we want to enforce MIN 3 total? Yes let's show at least alerts)
+
+        // Add normal items in time order until limit
+        for (const entry of sortedEntries) {
+            if (remaining <= 0) break;
+            if (!selectedSet.has(entry)) {
+                selectedSet.add(entry);
+                remaining--;
+            }
+        }
+
+        // Return in original time sorted order
+        return sortedEntries.filter(e => selectedSet.has(e));
+    }, [sortedEntries, expanded]);
+
+    const hiddenCount = sortedEntries.length - visibleEntries.length;
+
+    return (
+        <Box style={{ flex: 1, borderRight: '1px solid #f0f0f0', padding: 4, minWidth: 150, verticalAlign: 'top', display: 'flex', flexDirection: 'column' }}>
+            {visibleEntries.map((e) => (
+                <ScheduleCard
+                    key={`${e.item.id}-${e.isShinsegae ? 'S' : 'C'}`}
+                    entry={e}
+                    onClick={onCardClick}
+                />
+            ))}
+
+            {/* Collapse/Expand Controls */}
+            {sortedEntries.length > MAX_VISIBLE && (
+                <Box>
+                    {!expanded ? (
+                        <Box
+                            onClick={(e) => { e.stopPropagation(); setExpanded(true); }}
+                            style={{
+                                cursor: 'pointer',
+                                border: '1px dashed #ccc',
+                                borderRadius: 4,
+                                padding: '4px',
+                                textAlign: 'center',
+                                backgroundColor: '#fdfdfd'
+                            }}
+                        >
+                            <Group gap={2} justify="center">
+                                <Text size="xs" c="dimmed" fw={500}>더보기 ({hiddenCount})</Text>
+                                <IconChevronDown size={12} color="gray" />
+                            </Group>
+                        </Box>
+                    ) : (
+                        <Box
+                            onClick={(e) => { e.stopPropagation(); setExpanded(false); }}
+                            style={{
+                                cursor: 'pointer',
+                                borderTop: '1px solid #eee',
+                                marginTop: 4,
+                                paddingTop: 4,
+                                textAlign: 'center'
+                            }}
+                        >
+                            <IconChevronUp size={12} color="gray" />
+                        </Box>
+                    )}
+                </Box>
+            )}
+        </Box>
+    );
+};
+
 export default function ScheduleDashboard({ schedules, availableDates, currentDate, weekRange }: Props) {
     const router = useRouter();
     const [selectedItemState, setSelectedItemState] = useState<{ item: ScheduleRow, isShinsegae: boolean } | null>(null);
     const [modalOpened, { open: openModal, close: closeModal }] = useDisclosure(false);
+    // Default tab is 'competitor' which corresponds to the first tab requested by the user
+    // The second tab is 'weekly' which contains the current dashboard
+    const [activeTab, setActiveTab] = useState<string | null>('competitor');
 
     // Data Stucture for Weekly View
     const weekData = useMemo(() => {
         // We map: Key=`YYYY/MM/DD` -> Value=Map<ChannelName, Map<Hour, Items[]>>
-        // Actually, simple Map<DateString, Map<Hour, ItemForRender[]>> might be better.
-        // ItemForRender: standard struct for rendering.
-
         const map = new Map<string, Map<number, { isShinsegae: boolean, item: ScheduleRow }[]>>();
 
         // Initialize days
@@ -78,18 +275,7 @@ export default function ScheduleDashboard({ schedules, availableDates, currentDa
             if (map.has(dateRaw)) {
                 const hourMap = map.get(dateRaw)!;
 
-                // 1. Add Shinsegae Item (Use BD_BTIME) - Deduplicate if needed?
-                // Since rows are Pairs, we get multiple rows for one Shinsegae Item.
-                // We should use a Set outside to track added Shinsegae Items?
-                // Actually, if we just render them, they will stack.
-                // Let's rely on distinct `bd_btime` + `g_prog_name`?
-                // The user wants clean grid.
-                // I'll add "Shinsegae" entry only if I haven't added this specific time/prog yet?
-                // But loop order is arbitrary.
-                // Easier: Add render entry for Shinsegae. We filter duplicates at Render time OR use a Set here.
-
-                // Let's add them all to the map, then in render logic we deduplicate.
-                // Shinsegae Time: BD_BTIME
+                // 1. Add Shinsegae Item (Use BD_BTIME)
                 const sTimeStr = row.bd_btime || '00:00:00';
                 const sHour = parseInt(sTimeStr.split(':')[0], 10);
 
@@ -125,92 +311,10 @@ export default function ScheduleDashboard({ schedules, availableDates, currentDa
         }
     };
 
-    // Helper to render a single item in the cell
-    const renderItem = (entry: { isShinsegae: boolean, item: ScheduleRow }) => {
-        const { isShinsegae, item } = entry;
-        const raw = JSON.parse(item.raw_data || '{}');
-
-        // Fields
-        const productName = isShinsegae ? (raw.G_PROG_NAME || '방송정보없음') : item.other_product_name;
-        const channelName = isShinsegae ? 'Shinsegae' : item.other_broad_name;
-        const channelInfo = CHANNELS.find(c => c.name === channelName) || (isShinsegae ? CHANNELS[0] : null);
-        const channelLabel = channelInfo?.label || (isShinsegae ? '신세계' : channelName);
-
-        const startTime = isShinsegae ? item.bd_btime : item.other_btime;
-        // Use other_etime if available from DB column or raw data
-        const endTime = isShinsegae ? item.bd_etime : (item.other_etime || raw.OTHER_ETIME || '??:??');
-
-        const displayTimeStart = startTime?.substring(0, 5);
-        const displayTimeEnd = endTime?.substring(0, 5);
-
-        // Calc Duration
-        let duration = 0;
-        const s = parseTime(startTime);
-        const e = parseTime(endTime);
-        if (s > 0 && e > 0) {
-            duration = e - s;
-            if (duration < 0) duration += 1440;
-        }
-
-        const category = isShinsegae ? raw.MD_NAME : (raw.OTHER_MD_NAME_1 || raw.OTHER_MD_NAME_2);
-
-        // Colors etc
-        const logoColor = channelInfo?.color || 'gray';
-        const logoLabel = channelInfo?.label || (isShinsegae ? 'S' : 'OT');
-
-        const isAlert = !isShinsegae && ((item.sche_sml_score >= 6) || (item.item_sml_score >= 1.5));
-        const showBell = isAlert || (item.comp_alert && item.comp_alert.trim() !== '');
-
-        const price = item.product_sale_price || raw.PRODUCT_SALE_PRICE || 0;
-
-        const tooltipLabel = (
-            <div style={{ textAlign: 'left' }}>
-                <div>{channelLabel} | {duration}분</div>
-                <div>{productName}</div>
-                {price > 0 && <div>[판매가] {price.toLocaleString()}</div>}
-            </div>
-        );
-
-        return (
-            <Tooltip label={tooltipLabel} key={`${item.id}-${isShinsegae ? 'S' : 'C'}`} withArrow multiline>
-                <Card
-                    padding={4}
-                    radius="sm"
-                    withBorder
-                    onClick={(e) => { e.stopPropagation(); setSelectedItemState({ item, isShinsegae }); openModal(); }}
-                    style={{
-                        marginBottom: 4,
-                        cursor: 'pointer',
-                        backgroundColor: isAlert ? '#ffe3e3' : 'white',
-                        borderColor: isAlert ? '#ffc9c9' : '#eee',
-                    }}
-                >
-                    {/* Header: Logo + Time */}
-                    <Group gap={4} wrap="nowrap" mb={2}>
-                        <Badge
-                            size="xs"
-                            variant="filled"
-                            color={logoColor}
-                            radius="xs"
-                            style={{ minWidth: 24, padding: 0, justifyContent: 'center', height: 16, fontSize: 9 }}
-                        >
-                            {logoLabel}
-                        </Badge>
-                        <Text size="xs" fw={700} style={{ fontSize: '10px' }}>
-                            {displayTimeStart} ~ {displayTimeEnd}
-                        </Text>
-                    </Group>
-
-                    {/* Body: Cat | Name */}
-                    <Text size="xs" style={{ fontSize: '10px', lineHeight: 1.2 }} lineClamp={2}>
-                        {showBell && <IconBell size={8} color="red" style={{ marginRight: 2, verticalAlign: 'middle' }} />}
-                        <Text span fw={700} c="dimmed">{category}</Text>
-                        <Text span c="dimmed" mx={2}>|</Text>
-                        {productName}
-                    </Text>
-                </Card>
-            </Tooltip>
-        );
+    // Item Click Handler
+    const handleItemClick = (entry: { isShinsegae: boolean, item: ScheduleRow }) => {
+        setSelectedItemState(entry);
+        openModal();
     };
 
     // Generate Day Columns
@@ -227,104 +331,142 @@ export default function ScheduleDashboard({ schedules, availableDates, currentDa
     const dateValue = dayjs(currentDate.replace(/\//g, '-')).toDate();
 
     return (
-        <AppShell header={{ height: 60 }} padding="md">
-            <AppShell.Header p="xs" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Group>
-                    <Text fw={700} size="xl" c="blue" style={{ letterSpacing: -1 }}>
-                        CheckSchedule
-                    </Text>
-                    <Text size="sm" c="dimmed">주간 편성 분석 (Weekly Analysis)</Text>
-                </Group>
+        <AppShell header={{ height: 110 }} padding="md">
+            <AppShell.Header p="xs" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {/* Top Row: Title & Date Picker Controls */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                    <Group>
+                        <Text fw={700} size="xl" c="blue" style={{ letterSpacing: -1 }}>
+                            CheckSchedule
+                        </Text>
+                        <Text size="sm" c="dimmed">편성 분석 시스템</Text>
+                    </Group>
 
-                <Group>
-                    <ThemeIcon variant="default" onClick={() => moveWeek('prev')} style={{ cursor: 'pointer' }}><IconChevronLeft size={16} /></ThemeIcon>
-                    <DatePickerInput
-                        placeholder="날짜 선택"
-                        value={dateValue}
-                        onChange={onDateChange}
-                        valueFormat="YYYY/MM/DD"
-                        leftSection={<IconCalendar size={16} />}
-                        style={{ width: 140 }}
-                        styles={{ input: { textAlign: 'center' } }}
-                    />
-                    <ThemeIcon variant="default" onClick={() => moveWeek('next')} style={{ cursor: 'pointer' }}><IconChevronRight size={16} /></ThemeIcon>
-                </Group>
+                    <Group>
+                        <ThemeIcon variant="default" onClick={() => moveWeek('prev')} style={{ cursor: 'pointer' }}><IconChevronLeft size={16} /></ThemeIcon>
+                        <DatePickerInput
+                            placeholder="날짜 선택"
+                            value={dateValue}
+                            onChange={onDateChange}
+                            valueFormat="YYYY/MM/DD"
+                            leftSection={<IconCalendar size={16} />}
+                            style={{ width: 140 }}
+                            styles={{ input: { textAlign: 'center' } }}
+                        />
+                        <ThemeIcon variant="default" onClick={() => moveWeek('next')} style={{ cursor: 'pointer' }}><IconChevronRight size={16} /></ThemeIcon>
+                    </Group>
+                </div>
+
+                {/* Bottom Row: Tabs */}
+                <Tabs
+                    value={activeTab}
+                    onChange={setActiveTab}
+                    variant="outline"
+                    radius="md"
+                    styles={{
+                        tab: {
+                            fontWeight: 600,
+                            padding: '8px 20px',
+                            borderBottom: 'none',
+                        },
+                        list: {
+                            gap: 4
+                        }
+                    }}
+                >
+                    <Tabs.List>
+                        <Tabs.Tab value="competitor" color="blue">
+                            경쟁사 편성 분석
+                        </Tabs.Tab>
+                        <Tabs.Tab value="weekly" color="blue">
+                            주간 편성 상세
+                        </Tabs.Tab>
+                    </Tabs.List>
+                </Tabs>
             </AppShell.Header>
 
             <AppShell.Main>
-                <Box style={{ overflowX: 'auto', paddingBottom: 20 }}>
-                    <Box style={{ minWidth: 1000, display: 'flex', flexDirection: 'column' }}>
+                {/* 1. Competitor Schedule Analysis Tab Content */}
+                {activeTab === 'competitor' && (
+                    <Box p="xl" style={{ textAlign: 'center', color: '#868e96', marginTop: 50 }}>
+                        <Text size="lg">준비 중입니다.</Text>
+                        <Text size="sm">경쟁사 편성 분석 화면이 여기에 표시됩니다.</Text>
+                    </Box>
+                )}
 
-                        {/* Header Row (Time + Mon-Sun) */}
-                        <Box style={{ display: 'flex' }}>
-                            <Box style={{ width: 60, flexShrink: 0, padding: '4px 0', textAlign: 'center', borderRight: '1px solid #eee', borderBottom: '2px solid #ddd', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <Text fw={700} size="sm">시간대</Text>
-                            </Box>
-                            {days.map((d) => (
-                                <Box key={d.date} style={{ flex: 1, textAlign: 'center', padding: '4px 0', borderBottom: '2px solid #ddd', minWidth: 150, borderRight: '1px solid #f0f0f0' }}>
-                                    <Text fw={700}>{d.date.substring(5)} ({d.label})</Text>
+                {/* 2. Weekly Schedule Analysis Tab Content */}
+                {activeTab === 'weekly' && (
+                    <Box style={{ overflowX: 'auto', paddingBottom: 20 }}>
+                        <Box style={{ minWidth: 1000, display: 'flex', flexDirection: 'column' }}>
+
+                            {/* Header Row (Time + Mon-Sun) */}
+                            <Box style={{ display: 'flex' }}>
+                                <Box style={{ width: 60, flexShrink: 0, padding: '4px 0', textAlign: 'center', borderRight: '1px solid #eee', borderBottom: '2px solid #ddd', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <Text fw={700} size="sm">시간대</Text>
                                 </Box>
-                            ))}
-                        </Box>
-
-                        {/* Grid Body (Rows by Hour) */}
-                        <Box style={{ display: 'flex', flexDirection: 'column' }}>
-                            {Array.from({ length: 24 }).map((_, hour) => (
-                                <Box key={hour} style={{ display: 'flex', borderBottom: '1px solid #e0e0e0' }}>
-                                    {/* Time Label Cell */}
-                                    <Box style={{
-                                        width: 60,
-                                        flexShrink: 0,
-                                        borderRight: '1px solid #eee',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        backgroundColor: '#f8f9fa'
-                                    }}>
-                                        <Text size="xs" fw={700} c="dimmed">
-                                            {hour.toString().padStart(2, '0')}
-                                        </Text>
+                                {days.map((d) => (
+                                    <Box key={d.date} style={{ flex: 1, textAlign: 'center', padding: '4px 0', borderBottom: '2px solid #ddd', minWidth: 150, borderRight: '1px solid #f0f0f0' }}>
+                                        <Text fw={700}>{d.date.substring(5)} ({d.label})</Text>
                                     </Box>
+                                ))}
+                            </Box>
 
-                                    {/* Day Cells */}
-                                    {days.map(d => {
-                                        const dayItemsMap = weekData.get(d.date);
-                                        const entries = dayItemsMap?.get(hour) || [];
+                            {/* Grid Body (Rows by Hour) */}
+                            <Box style={{ display: 'flex', flexDirection: 'column' }}>
+                                {Array.from({ length: 24 }).map((_, hour) => (
+                                    <Box key={hour} style={{ display: 'flex', borderBottom: '1px solid #e0e0e0' }}>
+                                        {/* Time Label Cell */}
+                                        <Box style={{
+                                            width: 60,
+                                            flexShrink: 0,
+                                            borderRight: '1px solid #eee',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            backgroundColor: '#f8f9fa'
+                                        }}>
+                                            <Text size="xs" fw={700} c="dimmed">
+                                                {hour.toString().padStart(2, '0')}
+                                            </Text>
+                                        </Box>
 
-                                        // Deduplicate and Sort Logic
-                                        const uniqueEntries: { isShinsegae: boolean, item: ScheduleRow }[] = [];
-                                        const sTimeSet = new Set<string>();
+                                        {/* Day Cells */}
+                                        {days.map(d => {
+                                            const dayItemsMap = weekData.get(d.date);
+                                            const entries = dayItemsMap?.get(hour) || [];
 
-                                        entries.forEach(e => {
-                                            if (e.isShinsegae) {
-                                                if (!sTimeSet.has(e.item.bd_btime)) {
-                                                    sTimeSet.add(e.item.bd_btime);
+                                            // Deduplicate Logic (Same unique check)
+                                            const uniqueEntries: { isShinsegae: boolean, item: ScheduleRow }[] = [];
+                                            const sTimeSet = new Set<string>();
+
+                                            entries.forEach(e => {
+                                                if (e.isShinsegae) {
+                                                    if (!sTimeSet.has(e.item.bd_btime)) {
+                                                        sTimeSet.add(e.item.bd_btime);
+                                                        uniqueEntries.push(e);
+                                                    }
+                                                } else {
                                                     uniqueEntries.push(e);
                                                 }
-                                            } else {
-                                                uniqueEntries.push(e);
-                                            }
-                                        });
+                                            });
 
-                                        // Sort by Time
-                                        uniqueEntries.sort((a, b) => {
-                                            const tA = parseTime(a.isShinsegae ? a.item.bd_btime : a.item.other_btime);
-                                            const tB = parseTime(b.isShinsegae ? b.item.bd_btime : b.item.other_btime);
-                                            return tA - tB;
-                                        });
+                                            // Note: Sorting happens inside ScheduleCell now initially to handle priority properly?
+                                            // Actually ScheduleCell does sorting. We pass unique items.
 
-                                        return (
-                                            <Box key={d.date} style={{ flex: 1, borderRight: '1px solid #f0f0f0', padding: 4, minWidth: 150, verticalAlign: 'top' }}>
-                                                {uniqueEntries.map(e => renderItem(e))}
-                                            </Box>
-                                        );
-                                    })}
-                                </Box>
-                            ))}
+                                            return (
+                                                <ScheduleCell
+                                                    key={d.date}
+                                                    entries={uniqueEntries}
+                                                    onCardClick={handleItemClick}
+                                                />
+                                            );
+                                        })}
+                                    </Box>
+                                ))}
+                            </Box>
                         </Box>
-
                     </Box>
-                </Box>
+                )}
             </AppShell.Main>
 
             <Modal opened={modalOpened} onClose={closeModal} title="상세 정보" centered size="lg">
@@ -375,8 +517,6 @@ export default function ScheduleDashboard({ schedules, availableDates, currentDa
                                     dangerouslySetInnerHTML={{ __html: (description || '').replace(/\n/g, '<br/>') }}
                                 />
                             </Box>
-
-
 
                             {isAlert && (
                                 <Box p="xs" bg="red.0" style={{ border: '1px solid #ffd8d8', borderRadius: 4 }}>
