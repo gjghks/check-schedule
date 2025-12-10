@@ -15,7 +15,8 @@ import {
     Title,
     Tooltip,
     Card,
-    Tabs
+    Tabs,
+    Button
 } from '@mantine/core';
 import { DatePickerInput } from '@mantine/dates';
 import { IconBell, IconCalendar, IconChevronLeft, IconChevronRight, IconChevronDown, IconChevronUp } from '@tabler/icons-react';
@@ -148,6 +149,16 @@ export default function ScheduleDashboard({ schedules, availableDates, currentDa
         }
     };
 
+    const handleTodayClick = () => {
+        const todayStr = dayjs().format('YYYY/MM/DD');
+        if (activeTab === 'competitor') {
+            setRangeValue([dayjs().toDate(), dayjs().toDate()]);
+            router.push(`/?start=${todayStr}&end=${todayStr}`);
+        } else {
+            router.push(`/?date=${todayStr}`);
+        }
+    };
+
     // ... renderItem ... (no change needed in logic, but need to preserve code if replacing full body)
 
     // Generate Day Columns
@@ -210,15 +221,17 @@ export default function ScheduleDashboard({ schedules, availableDates, currentDa
 
                     <Box pb={4}>
                         <Group>
+                            <Button variant="default" size="sm" onClick={handleTodayClick}>오늘</Button>
                             {activeTab === 'competitor' ? (
                                 <DatePickerInput
                                     type="range"
                                     placeholder="분석 기간 선택"
                                     value={rangeValue}
                                     onChange={onRangeChange}
-                                    valueFormat="YYYY/MM/DD"
+                                    valueFormat="YYYY/MM/DD (ddd)"
+                                    locale="ko"
                                     leftSection={<IconCalendar size={16} />}
-                                    style={{ width: 220 }}
+                                    style={{ width: 260 }}
                                     styles={{ input: { textAlign: 'center' } }}
                                     size="sm"
                                 />
@@ -229,9 +242,10 @@ export default function ScheduleDashboard({ schedules, availableDates, currentDa
                                         placeholder="날짜 선택"
                                         value={dateValue}
                                         onChange={onDateChange}
-                                        valueFormat="YYYY/MM/DD"
+                                        valueFormat="YYYY/MM/DD (ddd)"
+                                        locale="ko"
                                         leftSection={<IconCalendar size={16} />}
-                                        style={{ width: 140 }}
+                                        style={{ width: 160 }}
                                         styles={{ input: { textAlign: 'center' } }}
                                         size="sm"
                                     />
