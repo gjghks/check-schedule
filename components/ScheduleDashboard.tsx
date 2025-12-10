@@ -175,7 +175,7 @@ export default function ScheduleDashboard({ schedules, availableDates, currentDa
     const dateValue = dayjs(currentDate.replace(/\//g, '-')).toDate();
 
     return (
-        <AppShell header={{ height: 110 }} padding="md">
+        <AppShell header={{ height: 110 }} padding="0">
             <AppShell.Header p="xs" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                 {/* Row 1: Title */}
                 <div style={{ display: 'flex', alignItems: 'center', width: '100%', paddingLeft: 8, paddingTop: 4 }}>
@@ -259,12 +259,12 @@ export default function ScheduleDashboard({ schedules, availableDates, currentDa
 
             <AppShell.Main>
                 {/* 1. Competitor Schedule Analysis Tab Content */}
-                <Box style={{ display: activeTab === 'competitor' ? 'block' : 'none', padding: 20 }}>
+                <Box style={{ display: activeTab === 'competitor' ? 'block' : 'none', padding: '10px 20px 20px 20px' }}>
                     <CompetitorPivot schedules={schedules} />
                 </Box>
 
                 {/* 2. Weekly Schedule Analysis Tab Content */}
-                <Box style={{ display: activeTab === 'weekly' ? 'block' : 'none' }}>
+                <Box style={{ display: activeTab === 'weekly' ? 'block' : 'none', paddingTop: 10 }}>
                     <Box style={{ overflowX: 'auto', paddingBottom: 20, paddingLeft: 20, paddingRight: 20 }}>
                         <Box style={{ minWidth: 1000, display: 'flex', flexDirection: 'column' }}>
                             {/* Header Row (Time + Mon-Sun) */}
