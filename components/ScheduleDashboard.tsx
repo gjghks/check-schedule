@@ -239,6 +239,7 @@ export default function ScheduleDashboard({ schedules, availableDates, currentDa
                             {activeTab === 'competitor' ? (
                                 <DatePickerInput
                                     type="range"
+                                    allowSingleDateInRange
                                     placeholder="분석 기간 선택"
                                     value={rangeValue}
                                     onChange={onRangeChange}
@@ -391,10 +392,16 @@ export default function ScheduleDashboard({ schedules, availableDates, currentDa
                                 </Box>
                             </Group>
 
-                            <Box>
-                                <Text c="dimmed" size="xs">판매가</Text>
-                                <Text fw={700} size="lg" c="blue">{price > 0 ? `${price.toLocaleString()}원` : '-'}</Text>
-                            </Box>
+                            <Group grow>
+                                <Box>
+                                    <Text c="dimmed" size="xs">판매가</Text>
+                                    <Text fw={700} size="lg" c="blue">{price > 0 ? `${price.toLocaleString()}원` : '-'}</Text>
+                                </Box>
+                                <Box>
+                                    <Text c="dimmed" size="xs">가중분</Text>
+                                    <Text fw={700} size="lg">{selectedItem.weights_time ? selectedItem.weights_time : '-'}</Text>
+                                </Box>
+                            </Group>
 
                             <Box>
                                 <Text c="dimmed" size="xs">상품 설명</Text>
@@ -464,7 +471,7 @@ function ScheduleCard({ entry, onClick }: ScheduleCardProps) {
 
     const tooltipLabel = (
         <div style={{ textAlign: 'left' }}>
-            <div>{channelLabel} | {duration}분</div>
+            <div>{channelLabel} | {duration}분 | {item.weights_time ?? 0}</div>
             <div>{productName}</div>
             {price > 0 && <div>[판매가] {price.toLocaleString()}</div>}
         </div>
