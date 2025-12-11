@@ -119,10 +119,12 @@ export default function ScheduleDashboard({ schedules, availableDates, currentDa
             if (map.has(dateRaw)) {
                 const hourMap = map.get(dateRaw)!;
                 // ...
-                const sTimeStr = row.bd_btime || '00:00:00';
-                const sHour = parseInt(sTimeStr.split(':')[0], 10);
-                if (!hourMap.has(sHour)) hourMap.set(sHour, []);
-                hourMap.get(sHour)!.push({ isShinsegae: true, item: row });
+                if (row.bd_btime) {
+                    const sTimeStr = row.bd_btime;
+                    const sHour = parseInt(sTimeStr.split(':')[0], 10);
+                    if (!hourMap.has(sHour)) hourMap.set(sHour, []);
+                    hourMap.get(sHour)!.push({ isShinsegae: true, item: row });
+                }
 
                 if (row.other_broad_name) {
                     const cTimeStr = row.other_btime || '00:00:00';
