@@ -353,9 +353,22 @@ export default function ScheduleDashboard({ schedules, availableDates, currentDa
                                             });
 
                                             // Sub-tab Filtering (Duplicate vs All)
-                                            const finalEntries = (activeTab === 'weekly' && weeklySubTab === 'duplicate')
-                                                ? uniqueEntries.filter(e => e.isShinsegae || (((e.item.sche_sml_score || 0) >= 6) || ((e.item.item_sml_score || 0) >= 1.5) || (e.item.comp_alert && e.item.comp_alert.trim() !== '')))
-                                                : uniqueEntries;
+                                            // Sub-tab Filtering (Duplicate vs All)
+                                            let finalEntries = uniqueEntries;
+                                            if (activeTab === 'weekly' && weeklySubTab === 'duplicate') {
+                                                const alerts = uniqueEntries.filter(e => !e.isShinsegae && (((e.item.sche_sml_score || 0) >= 6) || ((e.item.item_sml_score || 0) >= 1.5) || (e.item.comp_alert && e.item.comp_alert.trim() !== '')));
+                                                const alertCats = new Set<string>();
+                                                alerts.forEach(a => {
+                                                    if (a.item.other_md_name_1) alertCats.add(a.item.other_md_name_1);
+                                                    if (a.item.other_md_name_2) alertCats.add(a.item.other_md_name_2);
+                                                });
+                                                finalEntries = uniqueEntries.filter(e => {
+                                                    if (!e.isShinsegae) {
+                                                        return alerts.includes(e);
+                                                    }
+                                                    return alertCats.has(e.item.md_name || '');
+                                                });
+                                            }
 
                                             return (
                                                 <ScheduleCell
