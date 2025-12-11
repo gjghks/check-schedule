@@ -28,24 +28,16 @@ interface Props {
 }
 
 // Data Keys
-const KEY_BROADCASTER = 'other_broad_name'; // Column
-const KEY_MID = 'OTHER_MGROUPN_NAME'; // Row 1 (from raw)
-const KEY_SMALL = 'OTHER_SGROUPN_NAME'; // Row 2 (from raw)
-const KEY_BRAND = 'OTHER_BRAND_NAME'; // Row 3 (from raw)
-const KEY_PRODUCT = 'OTHER_PRODUCT_NAME'; // Filter (from raw or col) - Use col 'other_product_name'
-const KEY_MD = 'OTHER_MD_NAME_1'; // Filter (from raw) - Use raw
+const KEY_BROADCASTER = 'other_broad_name';
+const KEY_MID = 'other_mgroupn_name';
+const KEY_SMALL = 'other_sgroupn_name';
+const KEY_BRAND = 'other_brand_name';
+const KEY_PRODUCT = 'other_product_name';
+const KEY_MD = 'other_md_name_1';
 
 // Helper to get value
-const getValue = (row: ScheduleRow, key: string, isRaw: boolean): string => {
-    if (isRaw) {
-        try {
-            const raw = JSON.parse(row.raw_data || '{}');
-            return raw[key] || '(없음)';
-        } catch {
-            return '(없음)';
-        }
-    }
-    return (row as any)[key] || '(없음)'; // Broadcaster is in root
+const getValue = (row: ScheduleRow, key: string): string => {
+    return (row as any)[key] || '(없음)';
 };
 
 // Header Filter Component
@@ -145,13 +137,12 @@ export default function CompetitorPivot({ schedules }: Props) {
         };
 
         schedules.forEach(row => {
-            const raw = JSON.parse(row.raw_data || '{}');
             sets[KEY_BROADCASTER].add(row.other_broad_name || '(없음)');
-            sets[KEY_MID].add(raw[KEY_MID] || '(없음)');
-            sets[KEY_SMALL].add(raw[KEY_SMALL] || '(없음)');
-            sets[KEY_BRAND].add(raw[KEY_BRAND] || '(없음)');
+            sets[KEY_MID].add(row.other_mgroupn_name || '(없음)');
+            sets[KEY_SMALL].add(row.other_sgroupn_name || '(없음)');
+            sets[KEY_BRAND].add(row.other_brand_name || '(없음)');
             sets[KEY_PRODUCT].add(row.other_product_name || '(없음)');
-            sets[KEY_MD].add(raw[KEY_MD] || '(없음)');
+            sets[KEY_MD].add(row.other_md_name_1 || '(없음)');
         });
 
         // Convert to Arrays sorted
@@ -174,10 +165,9 @@ export default function CompetitorPivot({ schedules }: Props) {
             // Filter Mids: Only those with valid Small AND Brand
             const validMids = new Set<string>();
             schedules.forEach(row => {
-                const raw = JSON.parse(row.raw_data || '{}');
-                const mid = raw[KEY_MID] || '(없음)';
-                const small = raw[KEY_SMALL]; // Check raw existence
-                const brand = raw[KEY_BRAND];
+                const mid = row.other_mgroupn_name || '(없음)';
+                const small = row.other_sgroupn_name;
+                const brand = row.other_brand_name;
                 if (small && brand) {
                     validMids.add(mid);
                 }
@@ -207,13 +197,12 @@ export default function CompetitorPivot({ schedules }: Props) {
         if (Object.keys(selectedFilters).length === 0) return schedules;
 
         return schedules.filter(row => {
-            const raw = JSON.parse(row.raw_data || '{}');
             const b = row.other_broad_name || '(없음)';
-            const m = raw[KEY_MID] || '(없음)';
-            const s = raw[KEY_SMALL] || '(없음)';
-            const br = raw[KEY_BRAND] || '(없음)';
+            const m = row.other_mgroupn_name || '(없음)';
+            const s = row.other_sgroupn_name || '(없음)';
+            const br = row.other_brand_name || '(없음)';
             const p = row.other_product_name || '(없음)';
-            const md = raw[KEY_MD] || '(없음)';
+            const md = row.other_md_name_1 || '(없음)';
 
             // Safe check: if key not in filter (not initialized?), assume true
             if (selectedFilters[KEY_BROADCASTER] && !selectedFilters[KEY_BROADCASTER].has(b)) return false;
@@ -241,10 +230,9 @@ export default function CompetitorPivot({ schedules }: Props) {
         const root = new Map<string, TreeItem>(); // Key: Mid
 
         filteredData.forEach(row => {
-            const raw = JSON.parse(row.raw_data || '{}');
-            const mid = raw[KEY_MID] || '(없음)';
-            const small = raw[KEY_SMALL] || '(없음)';
-            const brand = raw[KEY_BRAND] || '(없음)';
+            const mid = row.other_mgroupn_name || '(없음)';
+            const small = row.other_sgroupn_name || '(없음)';
+            const brand = row.other_brand_name || '(없음)';
             const broadcaster = row.other_broad_name || '(없음)';
             const weight = (row.weights_time || 0) / 60; // Minutes to Hours? Or Minutes? User said 'weights_time / 60'. Assuming weights_time is minutes, result is hours.
 

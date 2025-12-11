@@ -342,8 +342,9 @@ export default function ScheduleDashboard({ schedules, availableDates, currentDa
 
                                             entries.forEach(e => {
                                                 if (e.isShinsegae) {
-                                                    if (!sTimeSet.has(e.item.bd_btime)) {
-                                                        sTimeSet.add(e.item.bd_btime);
+                                                    const bTime = e.item.bd_btime || '';
+                                                    if (!sTimeSet.has(bTime)) {
+                                                        sTimeSet.add(bTime);
                                                         uniqueEntries.push(e);
                                                     }
                                                 } else {
@@ -353,7 +354,7 @@ export default function ScheduleDashboard({ schedules, availableDates, currentDa
 
                                             // Sub-tab Filtering (Duplicate vs All)
                                             const finalEntries = (activeTab === 'weekly' && weeklySubTab === 'duplicate')
-                                                ? uniqueEntries.filter(e => e.isShinsegae || ((e.item.sche_sml_score >= 6) || (e.item.item_sml_score >= 1.5) || (e.item.comp_alert && e.item.comp_alert.trim() !== '')))
+                                                ? uniqueEntries.filter(e => e.isShinsegae || (((e.item.sche_sml_score || 0) >= 6) || ((e.item.item_sml_score || 0) >= 1.5) || (e.item.comp_alert && e.item.comp_alert.trim() !== '')))
                                                 : uniqueEntries;
 
                                             return (
@@ -378,15 +379,14 @@ export default function ScheduleDashboard({ schedules, availableDates, currentDa
             <Modal opened={modalOpened} onClose={closeModal} title="상세 정보" centered size="lg">
                 {selectedItemState && (() => {
                     const { item: selectedItem, isShinsegae } = selectedItemState;
-                    const raw = JSON.parse(selectedItem.raw_data || '{}');
-                    const productName = isShinsegae ? (raw.G_PROG_NAME || '방송정보없음') : (selectedItem.other_product_name || raw.OTHER_PRODUCT_NAME || '상품명 없음');
-                    const isAlert = !isShinsegae && ((selectedItem.sche_sml_score >= 6) || (selectedItem.item_sml_score >= 1.5));
-                    const description = raw.OTHER_ITEM_DESC || '설명 없음';
-                    const price = selectedItem.product_sale_price || raw.PRODUCT_SALE_PRICE || 0;
+                    const productName = isShinsegae ? (selectedItem.g_prog_name || '방송정보없음') : (selectedItem.other_product_name || '상품명 없음');
+                    const isAlert = !isShinsegae && (((selectedItem.sche_sml_score || 0) >= 6) || ((selectedItem.item_sml_score || 0) >= 1.5));
+                    const description = selectedItem.other_item_desc || '설명 없음';
+                    const price = selectedItem.product_sale_price || 0;
 
                     // Time Calculation
                     const startTime = isShinsegae ? selectedItem.bd_btime : selectedItem.other_btime;
-                    const endTime = isShinsegae ? selectedItem.bd_etime : (selectedItem.other_etime || raw.OTHER_ETIME || '??:??');
+                    const endTime = isShinsegae ? selectedItem.bd_etime : (selectedItem.other_etime || '??:??');
                     let duration = 0;
                     const s = parseTime(startTime);
                     const e = parseTime(endTime);
@@ -406,7 +406,7 @@ export default function ScheduleDashboard({ schedules, availableDates, currentDa
                                 </Box>
                                 <Box>
                                     <Text c="dimmed" size="xs">채널</Text>
-                                    <Text fw={500}>{isShinsegae ? '신세계라이브쇼핑' : (selectedItem.other_broad_name || raw.OTHER_BROAD_NAME || '경쟁사')}</Text>
+                                    <Text fw={500}>{isShinsegae ? '신세계라이브쇼핑' : (selectedItem.other_broad_name || '경쟁사')}</Text>
                                 </Box>
                             </Group>
 
@@ -465,16 +465,15 @@ interface ScheduleCardProps {
 
 function ScheduleCard({ entry, onClick }: ScheduleCardProps) {
     const { isShinsegae, item } = entry;
-    const raw = JSON.parse(item.raw_data || '{}');
 
     // Fields
-    const productName = isShinsegae ? (raw.G_PROG_NAME || '방송정보없음') : item.other_product_name;
+    const productName = isShinsegae ? (item.g_prog_name || '방송정보없음') : item.other_product_name;
     const channelName = isShinsegae ? 'Shinsegae' : item.other_broad_name;
     const channelInfo = CHANNELS.find(c => c.name === channelName) || (isShinsegae ? CHANNELS[0] : null);
     const channelLabel = channelInfo?.label || (isShinsegae ? '신세계' : channelName);
 
     const startTime = isShinsegae ? item.bd_btime : item.other_btime;
-    const endTime = isShinsegae ? item.bd_etime : (item.other_etime || raw.OTHER_ETIME || '??:??');
+    const endTime = isShinsegae ? item.bd_etime : (item.other_etime || '??:??');
 
     const displayTimeStart = startTime?.substring(0, 5);
     const displayTimeEnd = endTime?.substring(0, 5);
@@ -488,16 +487,16 @@ function ScheduleCard({ entry, onClick }: ScheduleCardProps) {
         if (duration < 0) duration += 1440;
     }
 
-    const category = isShinsegae ? raw.MD_NAME : (raw.OTHER_MD_NAME_1 || raw.OTHER_MD_NAME_2);
+    const category = isShinsegae ? item.md_name : (item.other_md_name_1 || item.other_md_name_2);
 
     // Colors etc
     const logoColor = channelInfo?.color || 'gray';
     const logoLabel = channelInfo?.label || (isShinsegae ? 'S' : 'OT');
 
-    const isAlert = !isShinsegae && ((item.sche_sml_score >= 6) || (item.item_sml_score >= 1.5));
+    const isAlert = !isShinsegae && (((item.sche_sml_score || 0) >= 6) || ((item.item_sml_score || 0) >= 1.5));
     const showBell = isAlert || (item.comp_alert && item.comp_alert.trim() !== '');
 
-    const price = item.product_sale_price || raw.PRODUCT_SALE_PRICE || 0;
+    const price = item.product_sale_price || 0;
 
     const tooltipLabel = (
         <div style={{ textAlign: 'left' }}>
@@ -577,7 +576,7 @@ function ScheduleCell({ entries, onCardClick }: ScheduleCellProps) {
 
         const alertItems = sortedEntries.filter(e => {
             const { isShinsegae, item } = e;
-            return !isShinsegae && ((item.sche_sml_score >= 6) || (item.item_sml_score >= 1.5) || (item.comp_alert && item.comp_alert.trim() !== ''));
+            return !isShinsegae && (((item.sche_sml_score || 0) >= 6) || ((item.item_sml_score || 0) >= 1.5) || (item.comp_alert && item.comp_alert.trim() !== ''));
         });
 
         // Use a set to track items already selected
