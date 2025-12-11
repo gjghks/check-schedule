@@ -17,10 +17,13 @@ import {
     Card,
     Tabs,
     Button,
-    SegmentedControl
+    SegmentedControl,
+    Alert,
+    ScrollArea
 } from '@mantine/core';
 import { DatePickerInput } from '@mantine/dates';
-import { IconBell, IconCalendar, IconChevronLeft, IconChevronRight, IconChevronDown, IconChevronUp } from '@tabler/icons-react';
+import { IconBell, IconCalendar, IconChevronLeft, IconChevronRight, IconChevronDown, IconChevronUp, IconSparkles } from '@tabler/icons-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { useRouter } from 'next/navigation';
 import { useDisclosure } from '@mantine/hooks';
 import dayjs from 'dayjs';
@@ -70,6 +73,7 @@ export default function ScheduleDashboard({ schedules, availableDates, currentDa
     const [selectedItemState, setSelectedItemState] = useState<{ item: ScheduleRow, isShinsegae: boolean } | null>(null);
     const [modalOpened, { open: openModal, close: closeModal }] = useDisclosure(false);
     const [activeTab, setActiveTab] = useState<string | null>('competitor');
+    const [aiModalOpen, setAiModalOpen] = useState(false);
     const [weeklySubTab, setWeeklySubTab] = useState<'duplicate' | 'all'>('duplicate');
 
     // Range Picker State for Competitor Tab
@@ -224,16 +228,28 @@ export default function ScheduleDashboard({ schedules, availableDates, currentDa
                     <Box pb={4}>
                         <Group>
                             {activeTab === 'weekly' && (
-                                <SegmentedControl
-                                    value={weeklySubTab}
-                                    onChange={(v) => setWeeklySubTab(v as any)}
-                                    data={[
-                                        { label: '중복', value: 'duplicate' },
-                                        { label: '상세', value: 'all' },
-                                    ]}
-                                    size="xs"
-                                    mr="xs"
-                                />
+                                <>
+                                    <Button
+                                        leftSection={<IconSparkles size={16} />}
+                                        variant="gradient"
+                                        gradient={{ from: 'violet', to: 'cyan', deg: 90 }}
+                                        size="xs"
+                                        mr="xs"
+                                        onClick={() => setAiModalOpen(true)}
+                                    >
+                                        생성형 AI 분석
+                                    </Button>
+                                    <SegmentedControl
+                                        value={weeklySubTab}
+                                        onChange={(v) => setWeeklySubTab(v as any)}
+                                        data={[
+                                            { label: '중복', value: 'duplicate' },
+                                            { label: '상세', value: 'all' },
+                                        ]}
+                                        size="xs"
+                                        mr="xs"
+                                    />
+                                </>
                             )}
                             <Button variant="default" size="sm" onClick={handleTodayClick}>오늘</Button>
                             {activeTab === 'competitor' ? (
@@ -423,6 +439,18 @@ export default function ScheduleDashboard({ schedules, availableDates, currentDa
                         </Stack>
                     );
                 })()}
+            </Modal>
+
+            <Modal
+                opened={aiModalOpen}
+                onClose={() => setAiModalOpen(false)}
+                title={<Group gap={8}><IconSparkles size={20} color="#7950f2" /><Text fw={700} size="lg">생성형 AI 분석 결과</Text></Group>}
+                size="80%"
+                padding="md"
+            >
+                <ScrollArea.Autosize mah="80vh" type="auto">
+                    <AiSummaryContent />
+                </ScrollArea.Autosize>
             </Modal>
         </AppShell>
     );
@@ -621,3 +649,116 @@ function ScheduleCell({ entries, onCardClick }: ScheduleCellProps) {
         </Box>
     );
 };
+
+function AiSummaryContent() {
+    return (
+        <Stack gap="lg">
+            {/* Section 1 */}
+            <Box>
+                <Title order={4} mb="sm" c="violet">1. 당사 상품 담당별 편성 현황 (전월 대비)</Title>
+                <Box h={300}>
+                    <ResponsiveContainer width="100%" height="100%">
+                        <BarChart
+                            data={[
+                                { name: '상품1담당', prev: 40.2, curr: 36.9 },
+                                { name: '상품2담당', prev: 34.2, curr: 28.9 },
+                                { name: '상품3담당', prev: 25.3, curr: 24.2 },
+                            ]}
+                            margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                        >
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="name" />
+                            <YAxis label={{ value: '비중(%)', angle: -90, position: 'insideLeft' }} />
+                            <RechartsTooltip />
+                            <Legend />
+                            <Bar dataKey="prev" name="전월" fill="#8884d8" />
+                            <Bar dataKey="curr" name="금월" fill="#82ca9d" />
+                        </BarChart>
+                    </ResponsiveContainer>
+                </Box>
+                <Alert variant="light" color="gray" title="세부 현황">
+                    <Stack gap="xs">
+                        <Text size="sm"><b>① 상품 1담당 (생활/식품/무형 등)</b>: 전체 비중 36.9% (▼ 3.3%p). 건강식품(▼3.4%p) 감소폭 최대.</Text>
+                        <Text size="sm"><b>② 상품 2담당 (패션/뷰티)</b>: 전체 비중 28.9% (▼ 5.3%p). 의류(▼4.4%p) 급감.</Text>
+                        <Text size="sm"><b>③ 상품 3담당 (레포츠/브랜드패션)</b>: 전체 비중 24.2% (▼ 1.1%p). 레포츠(▲1.9%p) 유일 증가.</Text>
+                    </Stack>
+                </Alert>
+            </Box>
+
+            <Divider />
+
+            {/* Section 2 */}
+            <Box>
+                <Title order={4} mb="sm" c="violet">2. 경쟁사별 편성 데이터 현황</Title>
+                <Box h={300}>
+                    <ResponsiveContainer width="100%" height="100%">
+                        <BarChart
+                            layout="vertical"
+                            data={[
+                                { name: '현대', div1: 41.0, div2: 35.9, div3: 0, etc: 23.1 },
+                                { name: 'GS', div1: 49.0, div2: 35.6, div3: 0, etc: 15.4 },
+                                { name: '롯데', div1: 43.4, div2: 46.9, div3: 9.1, etc: 0.6 },
+                                { name: 'CJ', div1: 44.3, div2: 51.7, div3: 4.0, etc: 0 },
+                            ]}
+                            margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                        >
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis type="number" />
+                            <YAxis dataKey="name" type="category" width={60} />
+                            <RechartsTooltip />
+                            <Legend />
+                            <Bar dataKey="div1" name="상품1담당" stackId="a" fill="#8884d8" />
+                            <Bar dataKey="div2" name="상품2담당" stackId="a" fill="#82ca9d" />
+                            <Bar dataKey="div3" name="상품3담당" stackId="a" fill="#ffc658" />
+                            <Bar dataKey="etc" name="기타/미매핑" stackId="a" fill="#ff8042" />
+                        </BarChart>
+                    </ResponsiveContainer>
+                </Box>
+                <Alert variant="light" color="gray" title="세부 현황">
+                    <Stack gap="xs">
+                        <Text size="sm"><b>롯데/CJ:</b> 패션/뷰티(2담당) 비중이 높음 (CJ 51.7%, 롯데 46.9%). CJ는 의류 비중 급증(23.5%).</Text>
+                        <Text size="sm"><b>현대/GS:</b> 상품1담당(식품/생활) 비중이 높으나, 현대는 미매핑(15.6%) 이슈 존재.</Text>
+                    </Stack>
+                </Alert>
+            </Box>
+
+            <Divider />
+
+            {/* Section 3 */}
+            <Box>
+                <Title order={4} mb="sm" c="violet">3. 카테고리별 비교 (당사 vs 경쟁사)</Title>
+                <Box h={350}>
+                    <ResponsiveContainer width="100%" height="100%">
+                        <BarChart
+                            data={[
+                                { name: '의류', shinsegae: 15.7, lotte: 23.9, cj: 23.5, hyundai: 17.2, gs: 15.0 },
+                                { name: '뷰티', shinsegae: 12.9, lotte: 13.0, cj: 19.0, hyundai: 12.0, gs: 18.7 },
+                                { name: '건강식품', shinsegae: 16.8, lotte: 13.8, cj: 19.3, hyundai: 11.2, gs: 19.7 },
+                                { name: '레포츠', shinsegae: 13.8, lotte: 8.2, cj: 3.2, hyundai: 4.2, gs: 3.5 },
+                                { name: '생활가전', shinsegae: 6.3, lotte: 14.3, cj: 10.6, hyundai: 13.1, gs: 15.4 },
+                            ]}
+                            margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                        >
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="name" />
+                            <YAxis label={{ value: '비중(%)', angle: -90, position: 'insideLeft' }} />
+                            <RechartsTooltip />
+                            <Legend />
+                            <Bar dataKey="shinsegae" name="당사" fill="#fa5252" />
+                            <Bar dataKey="lotte" name="롯데" fill="#EE3124" />
+                            <Bar dataKey="cj" name="CJ" fill="#6A00A6" />
+                            <Bar dataKey="hyundai" name="현대" fill="#119586" />
+                            <Bar dataKey="gs" name="GS" fill="#6CC218" />
+                        </BarChart>
+                    </ResponsiveContainer>
+                </Box>
+                <Alert variant="light" color="red" title="Insight">
+                    <Stack gap="xs">
+                        <Text size="sm"><b>당사 강세:</b> 레포츠(13.8%)는 경쟁사 대비 압도적 높음. 여행(4.7%)도 업계 최고 수준.</Text>
+                        <Text size="sm"><b>당사 약세:</b> 의류(15.7%)는 롯데/CJ 대비 8%p 낮음. 생활가전(6.3%)은 최하위.</Text>
+                    </Stack>
+                </Alert>
+            </Box>
+        </Stack>
+    );
+}

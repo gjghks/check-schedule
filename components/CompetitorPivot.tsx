@@ -21,7 +21,7 @@ import {
     Alert
 } from '@mantine/core';
 import { IconFilter, IconChevronRight, IconChevronDown, IconSearch, IconX, IconSparkles, IconInfoCircle } from '@tabler/icons-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+
 
 interface Props {
     schedules: ScheduleRow[];
@@ -304,7 +304,7 @@ export default function CompetitorPivot({ schedules }: Props) {
 
     // 6. Expansion State
     const [expanded, setExpanded] = useState<Set<string>>(new Set());
-    const [aiModalOpen, setAiModalOpen] = useState(false);
+
 
     const toggleExpand = (id: string) => {
         const newSet = new Set(expanded);
@@ -407,14 +407,6 @@ export default function CompetitorPivot({ schedules }: Props) {
                         onChange={(s) => handleFilterChange(KEY_MD, s)}
                     />
                 </Box>
-                <Button
-                    leftSection={<IconSparkles size={16} />}
-                    variant="gradient"
-                    gradient={{ from: 'violet', to: 'cyan', deg: 90 }}
-                    onClick={() => setAiModalOpen(true)}
-                >
-                    생성형 AI 분석
-                </Button>
             </Group>
 
             <ScrollArea style={{ flex: 1 }} type="auto">
@@ -501,302 +493,11 @@ export default function CompetitorPivot({ schedules }: Props) {
                     </Table.Tfoot>
                 </Table>
             </ScrollArea>
-            <Modal
-                opened={aiModalOpen}
-                onClose={() => setAiModalOpen(false)}
-                title={<Group gap={8}><IconSparkles size={20} color="#7950f2" /><Text fw={700} size="lg">경쟁사 편성 데이터 AI 분석 결과</Text></Group>}
-                size="70%"
-                padding="md"
-            >
-                <ScrollArea.Autosize mah="70vh" type="auto">
-                    <AiSummaryContent />
-                </ScrollArea.Autosize>
-            </Modal>
         </Stack>
     );
 }
 
-function AiSummaryContent() {
-    return (
-        <Stack gap="lg" p="xs">
-            {/* 0. Summary */}
-            <Box>
-                <Text fw={700} size="xl" mb="sm" c="violet">요약</Text>
-                <Alert variant="light" color="violet" icon={<IconSparkles />}>
-                    <Stack gap="xs">
-                        <Text size="sm"><b>분석 범위:</b> 2025-12-08 ~ 2025-12-14 · 방송사: 롯데, CJ · MD CAT: 의류</Text>
-                        <Text size="sm"><b>편성 규모:</b> 총 64건 · 총 방송 4,360분 (슬롯당 평균 68.1분)</Text>
-                        <Text size="sm"><b>핵심 인사이트 1줄:</b> 여성 의류, 특히 아우터·니트 중심 편성 구조로 프라임·주간 롱런 슬롯과 심야 단기 슬롯을 조합한 운영 패턴.</Text>
-                        <Text size="sm"><b>핵심 인사이트 2줄:</b> 25FW 신상품 편성이 84.4%를 차지하며, 25SS는 주로 심야·비프라임에 배치된 재고/클리어런스 성격.</Text>
-                        <Text size="sm"><b>핵심 인사이트 3줄:</b> CJ는 고가/프리미엄, 롯데는 중가 위주 가격 포지셔닝과 방송사별 전용 브랜드 구성을 통해 명확한 차별화 전략을 취함.</Text>
-                    </Stack>
-                </Alert>
-            </Box>
 
-            <Box mt="md" mb="md">
-                <Text fw={700} size="lg" mb="sm">시각화 분석</Text>
-                <Group grow align="start">
-                    <Stack align="center" gap="xs">
-                        <Text size="sm" fw={700} c="dimmed">시간대별 슬롯 비중</Text>
-                        <Box style={{ width: '100%', height: 250 }}>
-                            <ResponsiveContainer width="100%" height="100%">
-                                <PieChart>
-                                    <Pie
-                                        data={[
-                                            { name: '심야(0~6시)', value: 43.8, color: '#4c6ef5' },
-                                            { name: '아침(6~10시)', value: 17.2, color: '#fab005' },
-                                            { name: '주간(10~18시)', value: 17.2, color: '#82c91e' },
-                                            { name: '프라임(18~24시)', value: 21.9, color: '#fa5252' },
-                                        ]}
-                                        cx="50%"
-                                        cy="50%"
-                                        innerRadius={60}
-                                        outerRadius={80}
-                                        paddingAngle={5}
-                                        dataKey="value"
-                                    >
-                                        {[
-                                            { name: '심야(0~6시)', value: 43.8, color: '#4c6ef5' },
-                                            { name: '아침(6~10시)', value: 17.2, color: '#fab005' },
-                                            { name: '주간(10~18시)', value: 17.2, color: '#82c91e' },
-                                            { name: '프라임(18~24시)', value: 21.9, color: '#fa5252' },
-                                        ].map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={entry.color} />
-                                        ))}
-                                    </Pie>
-                                    <RechartsTooltip />
-                                    <Legend />
-                                </PieChart>
-                            </ResponsiveContainer>
-                        </Box>
-                        <Alert variant="light" color="blue" title="Insight" p="xs">
-                            <Text size="xs">심야 시간이 <b>43.8%</b>로 가장 높은 비중을 차지하며, 재고 소진 및 테스트 편성이 집중됨.</Text>
-                        </Alert>
-                    </Stack>
-
-                    <Stack align="center" gap="xs">
-                        <Text size="sm" fw={700} c="dimmed">방송사별 편성 규모 비교</Text>
-                        <Box style={{ width: '100%', height: 250 }}>
-                            <ResponsiveContainer width="100%" height="100%">
-                                <BarChart
-                                    data={[
-                                        { name: '롯데', slots: 35, minutes: 2440 },
-                                        { name: 'CJ', slots: 29, minutes: 1920 },
-                                    ]}
-                                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                                >
-                                    <CartesianGrid strokeDasharray="3 3" />
-                                    <XAxis dataKey="name" />
-                                    <YAxis yAxisId="left" orientation="left" stroke="#8884d8" label={{ value: '슬롯(건)', angle: -90, position: 'insideLeft' }} />
-                                    <YAxis yAxisId="right" orientation="right" stroke="#82ca9d" label={{ value: '시간(분)', angle: 90, position: 'insideRight' }} />
-                                    <RechartsTooltip />
-                                    <Legend />
-                                    <Bar yAxisId="left" dataKey="slots" name="슬롯 수" fill="#8884d8" barSize={30} />
-                                    <Bar yAxisId="right" dataKey="minutes" name="방송 시간" fill="#82ca9d" barSize={30} />
-                                </BarChart>
-                            </ResponsiveContainer>
-                        </Box>
-                        <Alert variant="light" color="green" title="Insight" p="xs">
-                            <Text size="xs">롯데가 슬롯 수 및 방송 시간 모두 소폭 우위이나, 양사 모두 <b>효율적 운영 전략</b> 유사.</Text>
-                        </Alert>
-                    </Stack>
-                </Group>
-            </Box>
-
-            <Divider />
-
-            {/* 1. Data Overview */}
-            <Box>
-                <Text fw={700} size="lg" mb="sm">1. 데이터 개요</Text>
-                <Stack gap="sm">
-                    <Box>
-                        <Text size="sm" fw={700}>• 조회 조건</Text>
-                        <Stack gap={4} pl="md" mt={4}>
-                            <Text size="sm" c="dimmed">- 편성일: 2025-12-08 ~ 2025-12-14</Text>
-                            <Text size="sm" c="dimmed">- 방송사: 롯데, CJ</Text>
-                            <Text size="sm" c="dimmed">- MD CAT: 의류 (전체 64건 모두 의류로 매핑)</Text>
-                        </Stack>
-                    </Box>
-                    <Box>
-                        <Text size="sm" fw={700}>• 편성 규모</Text>
-                        <Stack gap={4} pl="md" mt={4}>
-                            <Text size="sm" c="dimmed">- 총 편성 슬롯: 64건</Text>
-                            <Text size="sm" c="dimmed">- 총 방송 시간: 4,360분 (약 72.7시간)</Text>
-                            <Text size="sm" c="dimmed">- 슬롯당 평균 방송 시간: 68.1분</Text>
-                        </Stack>
-                    </Box>
-                    <Box>
-                        <Text size="sm" fw={700}>• 데이터 범위·제한</Text>
-                        <Stack gap={4} pl="md" mt={4}>
-                            <Text size="sm" c="dimmed">- 포함 필드: 방송사, 편성일시, 대·중·소분류, 브랜드, 상품명, 판매가, MD CAT, 타사아이템코드/명.</Text>
-                            <Text size="sm" c="dimmed">- 주의사항: 의류 중심으로 사전 필터링된 샘플이며, 시즌 정보는 상품명 텍스트(25FW/25SS) 기반 추출로 일부 미표기(4.7%).</Text>
-                        </Stack>
-                    </Box>
-                </Stack>
-            </Box>
-
-            {/* 2. Structure Insight */}
-            <Box>
-                <Text fw={700} size="lg" mb="sm">2. 편성 구조 인사이트</Text>
-                <Stack gap="sm">
-                    <Box>
-                        <Text size="sm" fw={700}>• 시간대별 편성 패턴</Text>
-                        <Stack gap={4} pl="md" mt={4}>
-                            <Text size="sm" c="dimmed">- 주요 시간대 구간: 심야(0~6시) / 아침(6~10시) / 주간(10~18시) / 프라임(18~24시)</Text>
-                            <Text size="sm" c="dimmed">- 슬롯 분포: 심야 43.8%(28건) · 아침 17.2%(11건) · 주간 17.2%(11건) · 프라임 21.9%(14건)</Text>
-                            <Text size="sm" c="dimmed">- 방송 시간 분포: 심야 17.8%(775분) · 아침 23.9%(1,040분) · 주간 25.7%(1,120분) · 프라임 32.7%(1,425분)</Text>
-                            <Text size="sm" c="dimmed">- 특징 요약: 심야는 평균 27.7분의 짧은 편성이 다수이고, 아침·주간·프라임은 90~100분대 롱런 편성이 기본값.</Text>
-                        </Stack>
-                    </Box>
-                    <Box>
-                        <Text size="sm" fw={700}>• 요일별 편성 패턴</Text>
-                        <Stack gap={4} pl="md" mt={4}>
-                            <Text size="sm" c="dimmed">- 요일별 편성 건수: 평일(월~금) 52건(81.3%) · 주말(토·일) 12건(18.8%)로 평일 편성 집중.</Text>
-                            <Text size="sm" c="dimmed">- 요일별 방송 시간: 월~금 합산 3,550분(81.4%) · 토 525분(12.0%) · 일 285분(6.5%).</Text>
-                            <Text size="sm" c="dimmed">- 요일별 핵심 특징: 의류 편성은 주중에 몰고, 주말에는 상대적으로 의류 비중을 낮추는 운영 패턴으로 해석 가능.</Text>
-                        </Stack>
-                    </Box>
-                    <Box>
-                        <Text size="sm" fw={700}>• 방송사별 운영 차이</Text>
-                        <Stack gap={4} pl="md" mt={4}>
-                            <Text size="sm" c="dimmed">- 방송사별 편성 비중: 롯데 35건(54.7%, 2,440분/56.0%) · CJ 29건(45.3%, 1,920분/44.0%).</Text>
-                            <Text size="sm" c="dimmed">- 슬롯당 평균 방송 시간: 롯데 69.7분 · CJ 66.2분으로 유사한 수준.</Text>
-                            <Text size="sm" c="dimmed">- 특징 요약: 롯데가 물량과 총 방송 시간에서 소폭 우위이며, 두 방송사 모두 “1시간 내외 롱런 + 심야 단기 슬롯” 조합을 활용.</Text>
-                        </Stack>
-                    </Box>
-                </Stack>
-            </Box>
-
-            {/* 3. Category/Product */}
-            <Box>
-                <Text fw={700} size="lg" mb="sm">3. 카테고리·상품 인사이트</Text>
-                <Stack gap="sm">
-                    <Box>
-                        <Text size="sm" fw={700}>• 카테고리 구성</Text>
-                        <Stack gap={4} pl="md" mt={4}>
-                            <Text size="sm" c="dimmed">- 대분류 비중: 의류 98.4%(63건) · 스포츠/레저 1.6%(1건, 여성 골프의류).</Text>
-                            <Text size="sm" c="dimmed">- 중분류 비중: 여성의류 90.6%(58건) · 남성의류 7.8%(5건) · 골프 1.6%(1건).</Text>
-                            <Text size="sm" c="dimmed">- 소분류 상위: 자켓/코트 35.9%(23건) · 니트/스웨터 20.3%(13건) · 패딩 점퍼 10.9%(7건) · 팬츠/바지 9.4%(6건).</Text>
-                            <Text size="sm" c="dimmed">- 핵심 메시지: 슬롯의 절반 이상이 아우터(자켓/코트·패딩)와 니트로 구성된 여성 중심 편성 구조이며, 남성·골프 카테고리는 보조적 역할.</Text>
-                        </Stack>
-                    </Box>
-                    <Box>
-                        <Text size="sm" fw={700}>• 시즌 구성(FW/SS 등)</Text>
-                        <Stack gap={4} pl="md" mt={4}>
-                            <Text size="sm" c="dimmed">- 시즌별 비중: 25FW 84.4%(54건) · 25SS 10.9%(7건) · 시즌 미표기 4.7%(3건).</Text>
-                            <Text size="sm" c="dimmed">- 시즌별 시간대 패턴: 25SS 7건 중 심야 5건 · 아침 1건 · 주간 1건으로, 구 시즌 상품은 주로 심야·비프라임에 배치.</Text>
-                            <Text size="sm" c="dimmed">- 해석: 25FW 신상품 중심의 메인 편성 구조이며, 25SS는 재고 소진/클리어런스 성격으로 심야 슬롯을 활용하는 전략.</Text>
-                        </Stack>
-                    </Box>
-                    <Box>
-                        <Text size="sm" fw={700}>• 가격대 구조</Text>
-                        <Stack gap={4} pl="md" mt={4}>
-                            <Text size="sm" c="dimmed">- 가격 분포: 최소 39,900원 · 중앙값 129,000원 · 평균 약 223,000원 · 최대 1,990,000원.</Text>
-                            <Text size="sm" c="dimmed">- 가격대 구간별 비중: 10만 미만 34.4%(22건) · 10~20만 43.8%(28건) · 20~30만 7.8%(5건) · 30만 이상 14.1%(9건).</Text>
-                            <Text size="sm" c="dimmed">- 시간대·가격대 관계: 30만 이상 고가 상품 9건 중 44%가 심야, 22%가 주간, 22%가 프라임에 편성되어 고가 아우터도 심야 다회 노출 전략을 활용.</Text>
-                        </Stack>
-                    </Box>
-                </Stack>
-            </Box>
-
-            {/* 4. Brand/Item */}
-            <Box>
-                <Text fw={700} size="lg" mb="sm">4. 브랜드·아이템 인사이트</Text>
-                <Stack gap="sm">
-                    <Box>
-                        <Text size="sm" fw={700}>• 브랜드 집중도</Text>
-                        <Stack gap={4} pl="md" mt={4}>
-                            <Text size="sm" c="dimmed">- 상위 브랜드 Top5(공백 제거 기준): 셀렙샵 7회 · 시슬리 5회 · 3.1필립림 4회 · ST.JOHN 3회 · 오일릴리 3회.</Text>
-                            <Text size="sm" c="dimmed">- 브랜드 집중도: 상위 5개 브랜드가 전체 슬롯의 34.4%(22/64)를 차지.</Text>
-                            <Text size="sm" c="dimmed">- 브랜드 포트폴리오 특징: 여성 프리미엄/컨템포러리 브랜드 비중이 높고, 일부 남성·골프·캐주얼 브랜드가 보강하는 구조.</Text>
-                        </Stack>
-                    </Box>
-                    <Box>
-                        <Text size="sm" fw={700}>• 방송사-브랜드 매트릭스</Text>
-                        <Stack gap={4} pl="md" mt={4}>
-                            <Text size="sm" c="dimmed">- 양 방송사에 동시에 편성된 브랜드는 없음(브랜드_norm 기준, CJ·롯데 모두 0보다 큰 브랜드 없음).</Text>
-                            <Text size="sm" c="dimmed">- 롯데 전용 대표 브랜드: 시슬리, 3.1필립림, LBL, 오일릴리, 폴앤조, USPA, 아르마니익스체인지 등.</Text>
-                            <Text size="sm" c="dimmed">- CJ 전용 대표 브랜드: 셀렙샵, ST.JOHN, 더엣지, 로보, 에디바우어, 힐크릭, 페어라이어 등.</Text>
-                            <Text size="sm" c="dimmed">- 특징: 방송사별로 브랜드 포트폴리오를 사실상 분리 운영하여, 채널 아이덴티티를 브랜드 레벨에서 차별화.</Text>
-                        </Stack>
-                    </Box>
-                    <Box>
-                        <Text size="sm" fw={700}>• 반복 편성 패턴</Text>
-                        <Stack gap={4} pl="md" mt={4}>
-                            <Text size="sm" c="dimmed">- 동일 상품/라인업의 주간 내 반복 횟수: 동일 상품명 기준 2~3회 이상 반복된 상품이 10개, 전체 슬롯의 약 32.8%(21/64)를 차지.</Text>
-                            <Text size="sm" c="dimmed">- 반복 시간대 패턴: 반복 편성 노출의 76%가 심야(0~6시)에 집중되어, 심야 다회 노출로 판매·반응을 누적시키는 전략으로 보임.</Text>
-                            <Text size="sm" c="dimmed">- 대표 사례: 시슬리 25SS 점퍼/자켓, BOB 다운 점퍼, 콜롬보 카멜100 코트, 다니엘크레뮤 본딩 슬랙스 등 동일 상품이 심야 위주로 여러 차례 편성.</Text>
-                            <Text size="sm" c="dimmed">- 해석: 심야 테스트 및 재방을 통해 수요 검증 후, 일부 상품을 주간/프라임으로 승격시키는 스테이지형 운영 가능성이 높음.</Text>
-                        </Stack>
-                    </Box>
-                    <Box>
-                        <Text size="sm" fw={700}>• 아이템 코드 활용 방식(선택)</Text>
-                        <Stack gap={4} pl="md" mt={4}>
-                            <Text size="sm" c="dimmed">- 동일 아이템 코드에 여러 상품명이 묶인 사례 존재(예: 코드 00000596이 다양한 셀렙샵/셀렙샵에디션 아우터 상품을 포함).</Text>
-                            <Text size="sm" c="dimmed">- 코드 단위 해석: 개별 SKU보다는 브랜드·라인업(예: 셀렙샵에디션_패딩/점퍼) 단위로 묶는 상위 코드로 활용되는 구조로 추정.</Text>
-                        </Stack>
-                    </Box>
-                </Stack>
-            </Box>
-
-            {/* 5. Quality/Outliers */}
-            <Box>
-                <Text fw={700} size="lg" mb="sm">5. 데이터 품질·이상치 체크</Text>
-                <Stack gap="sm">
-                    <Box>
-                        <Text size="sm" fw={700}>• 브랜드/카테고리 표기 이슈</Text>
-                        <Stack gap={4} pl="md" mt={4}>
-                            <Text size="sm" c="dimmed">- 브랜드명 표기 불일치: ‘3.1 필립 림’ vs ‘3.1필립림’, ‘폴 앤조’ vs ‘폴앤조’ 등 공백 여부에 따라 다른 값으로 인식될 위험.</Text>
-                            <Text size="sm" c="dimmed">- 카테고리 불일치: 대분류 ‘스포츠/레저’이지만 MD CAT는 ‘의류’로 매핑된 여성 골프의류 1건 존재.</Text>
-                        </Stack>
-                    </Box>
-                    <Box>
-                        <Text size="sm" fw={700}>• 가격·시간 데이터 이슈</Text>
-                        <Stack gap={4} pl="md" mt={4}>
-                            <Text size="sm" c="dimmed">- 가격 데이터는 전 건 숫자 변환 가능하며, 명확한 누락값/0원 데이터는 없음.</Text>
-                            <Text size="sm" c="dimmed">- 편성시간 극단값: 최소 15분(주로 심야 짧은 슬롯) · 최대 150분(프라임/심야 롱런 특집)으로, 운영 전략 관점의 선택으로 해석 가능.</Text>
-                        </Stack>
-                    </Box>
-                    <Box>
-                        <Text size="sm" fw={700}>• 분석 시 유의사항</Text>
-                        <Stack gap={4} pl="md" mt={4}>
-                            <Text size="sm" c="dimmed">- 시즌 미표기 상품(3건)은 상품명 외 추가 정보 없이 FW/SS 구분이 어려우므로, 시즌별 실적/편성 분석 시 별도 처리 필요.</Text>
-                            <Text size="sm" c="dimmed">- 타사아이템코드는 라인업 단위 코드로 보이므로, SKU 단위 분석보다는 슬롯·브랜드·카테고리 기준 분석에 적합.</Text>
-                        </Stack>
-                    </Box>
-                </Stack>
-            </Box>
-
-            {/* 6. Insights */}
-            <Box>
-                <Text fw={700} size="lg" mb="sm">6. 당사 시사점 및 액션 아이템</Text>
-                <Stack gap="sm">
-                    <Box>
-                        <Text size="sm" fw={700}>• 편성 전략 시사점</Text>
-                        <Stack gap={4} pl="md" mt={4}>
-                            <Text size="sm" c="dimmed">- 시간대 전략: 신상/고가 아우터는 프라임·주간 롱런 + 심야 반복 편성 조합, 구 시즌/25SS는 심야 위주 편성이라는 구조를 벤치마킹 가능.</Text>
-                            <Text size="sm" c="dimmed">- 카테고리 믹스: 평일에 의류(특히 여성 아우터)를 집중시키고, 주말에는 타 카테고리 비중을 높이는 형태로 카테고리 믹스를 설계할 수 있음.</Text>
-                        </Stack>
-                    </Box>
-                    <Box>
-                        <Text size="sm" fw={700}>• 브랜드·상품 전략 시사점</Text>
-                        <Stack gap={4} pl="md" mt={4}>
-                            <Text size="sm" c="dimmed">- 브랜드 포트폴리오: 타사는 방송사별 전용 브랜드 전략으로 차별화 중이며, 당사는 공백 브랜드/가격대 포지셔닝 또는 동일 브랜드의 다른 스토리텔링·구성으로 차별화 여지.</Text>
-                            <Text size="sm" c="dimmed">- 반복 편성/재방 전략: 심야 다회 노출 → 성과 검증 → 핵심 시간대 승격이라는 구조를 당사 반복 편성 정책 및 추천 로직에 적용 가능.</Text>
-                        </Stack>
-                    </Box>
-                    <Box>
-                        <Text size="sm" fw={700}>• 운영·시스템 측 시사점</Text>
-                        <Stack gap={4} pl="md" mt={4}>
-                            <Text size="sm" c="dimmed">- 데이터 정제 필요 영역: 브랜드 공백 제거(‘3.1필립림’, ‘폴앤조’ 등)와 시즌 태깅 자동화, 대분류·MD CAT 정합성 체크 로직 확보.</Text>
-                            <Text size="sm" c="dimmed">- 추천/에이전트 활용 아이디어: 타사 시간대·시즌·가격대 패턴을 학습시켜, 우리 편성표에 대해 “어떤 상품을 언제·몇 분 편성할지” 자동 제안하는 에이전트 설계에 활용 가능.</Text>
-                        </Stack>
-                    </Box>
-                </Stack>
-            </Box>
-        </Stack>
-    );
-}
 
 // Helper component for fragment to avoid key warning issues with map
 const MantineFragment = ({ children }: { children: React.ReactNode }) => <>{children}</>;
