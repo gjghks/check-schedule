@@ -351,7 +351,7 @@ export default function ScheduleDashboard({ schedules, availableDates, currentDa
 
                                             // Sub-tab Filtering (Duplicate vs All)
                                             const finalEntries = (activeTab === 'weekly' && weeklySubTab === 'duplicate')
-                                                ? uniqueEntries.filter(e => !e.isShinsegae && ((e.item.sche_sml_score >= 6) || (e.item.item_sml_score >= 1.5) || (e.item.comp_alert && e.item.comp_alert.trim() !== '')))
+                                                ? uniqueEntries.filter(e => e.isShinsegae || ((e.item.sche_sml_score >= 6) || (e.item.item_sml_score >= 1.5) || (e.item.comp_alert && e.item.comp_alert.trim() !== '')))
                                                 : uniqueEntries;
 
                                             return (
