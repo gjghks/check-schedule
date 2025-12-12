@@ -1,38 +1,18 @@
-col_name,data_type,comment
-EXEC_DATE,string,작업일자
-BD_DATE,string,자사 방송일자
-BD_BTIME,string,자사 방송시작시간
-BD_ETIME,string,자사 방송종료시간
-G_PROG_CODE,string,자사 PGM그룹코드
-OTHER_BROAD_NAME,string,타사 방송국
-OTHER_BTIME,string,타사 방송시작시간
-OTHER_PRODUCT_NAME,string,타사 상품명
-BD_BHOUR,string,자사 방송시작시간대(HOUR)
-G_PROG_NAME,string,자사 PGM그룹명
-MD_MAN_NAME,string,자사 담당MD명
-MD_CODE,string,자사 MD코드
-MD_NAME,string,자사 MD명
-BRAND_CODE,string,자사 브랜드코드
-BRAND_NAME,string,자사 브랜드명
-LGROUPN,string,자사 대분류코드
-LGROUPN_NAME,string,자사 대분류명
-MGROUPN,string,자사 중분류코드
-MGROUPN_NAME,string,자사 중분류명
-SGROUPN,string,자사 소분류코드
-SGROUPN_NAME,string,자사 소분류명
-OTHER_BRAND_NAME,string,타사 브랜드명
-OTHER_MD_NAME_1,string,타사 MD명_1
-OTHER_MD_NAME_2,string,타사 MD명_2
-OTHER_MD_NAME_3,string,타사 MD명_3
-OTHER_LGROUPN_NAME,string,타사 대분류명
-OTHER_MGROUPN_NAME,string,타사 중분류명
-OTHER_SGROUPN_NAME,string,타사 소분류명
-OTHER_ITEM_DESC,string,타사 상품정보 요약
-OTHER_ITEM_TAG,string,타사 속성요약(참고)
-MATCH_SCORE,int,매칭점수
-ITEM_SML_SCORE,float,상품유사점수
-SCHE_SML_SCORE,float,편성유사도
-COMP_ALERT,string,경쟁도알림
-SML_RSN,string,유사사유
-CREATE_DTM,timestamp,생성일시
-CREATE_NAME,string,생성자
+cid,name,type,notnull,dflt_value,pk
+0,id,INTEGER,0,null,1
+1,exec_date,TEXT,0,null,0
+2,bd_date,TEXT,0,null,0
+3,bd_btime,TEXT,0,null,0
+4,bd_etime,TEXT,0,null,0
+5,other_broad_name,TEXT,0,null,0
+6,other_btime,TEXT,0,null,0
+7,other_product_name,TEXT,0,null,0
+8,other_item_desc,TEXT,0,null,0
+9,match_score,INTEGER,0,null,0
+10,sche_sml_score,REAL,0,null,0
+11,item_sml_score,REAL,0,null,0
+12,comp_alert,TEXT,0,null,0
+13,raw_data,TEXT,0,null,0
+14,other_etime,TEXT,0,null,0
+15,product_sale_price,INTEGER,0,null,0
+16,weights_time,REAL,0,null,0

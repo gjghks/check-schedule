@@ -463,9 +463,7 @@ export default function ScheduleDashboard({ schedules, availableDates, currentDa
                 size="80%"
                 padding="md"
             >
-                <ScrollArea.Autosize mah="80vh" type="auto">
-                    <AiSummaryContent />
-                </ScrollArea.Autosize>
+                <AiSummaryContent />
             </Modal>
         </AppShell>
     );
@@ -665,113 +663,339 @@ function ScheduleCell({ entries, onCardClick }: ScheduleCellProps) {
 };
 
 function AiSummaryContent() {
+    const CustomTooltip = ({ active, payload, label }: any) => {
+        if (active && payload && payload.length) {
+            return (
+                <div style={{ backgroundColor: 'white', padding: '10px', border: '1px solid #ccc', fontSize: '12px' }}>
+                    <p style={{ fontWeight: 'bold', marginBottom: '5px' }}>{label}</p>
+                    {payload.map((p: any) => (
+                        <p key={p.name} style={{ color: p.color, margin: 0 }}>
+                            {p.name}: {p.value}%
+                        </p>
+                    ))}
+                </div>
+            );
+        }
+        return null;
+    };
+
     return (
-        <Stack gap="lg">
+        <Stack gap="xl">
+            {/* Summary Box */}
+            <Alert variant="filled" color="violet" title="요약 (Summary)">
+                <Text size="sm" fw={700} mb="xs">
+                    주요 데이터: 당사 '레포츠' 16.0% 편성, CJ '패션/뷰티' 50.1% 편성, GS '건강식품' 20.5% 편성
+                </Text>
+                <Stack gap={4}>
+                    <Text size="sm">• <b>당사 편성:</b> 상품3담당(레포츠/언더웨어) 비중이 <b>28.2%</b>로 전월 대비 <b>2.9%p</b> 상승함.</Text>
+                    <Text size="sm">• <b>경쟁사 데이터:</b> CJ(상품2 50.1%), GS(상품1 52.0%), 롯데(상품2 46.5%), 현대(상품1 42.4%).</Text>
+                </Stack>
+            </Alert>
+
+            <Divider />
+
             {/* Section 1 */}
             <Box>
-                <Title order={4} mb="sm" c="violet">1. 당사 상품 담당별 편성 현황 (전월 대비)</Title>
-                <Box h={300}>
+                <Title order={4} mb="sm" c="violet">1. 당사 상품 담당별 편성 현황</Title>
+                <Box h={250}>
                     <ResponsiveContainer width="100%" height="100%">
                         <BarChart
                             data={[
-                                { name: '상품1담당', prev: 40.2, curr: 36.9 },
-                                { name: '상품2담당', prev: 34.2, curr: 28.9 },
-                                { name: '상품3담당', prev: 25.3, curr: 24.2 },
+                                { name: '상품1담당', prev: 40.2, curr: 38.5 },
+                                { name: '상품2담당', prev: 34.3, curr: 31.7 },
+                                { name: '상품3담당', prev: 25.3, curr: 28.2 },
                             ]}
                             margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
                         >
                             <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="name" />
-                            <YAxis label={{ value: '비중(%)', angle: -90, position: 'insideLeft' }} />
-                            <RechartsTooltip />
-                            <Legend />
-                            <Bar dataKey="prev" name="전월" fill="#8884d8" />
-                            <Bar dataKey="curr" name="금월" fill="#82ca9d" />
+                            <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                            <YAxis label={{ value: '(%)', angle: -90, position: 'insideLeft' }} tick={{ fontSize: 12 }} />
+                            <RechartsTooltip content={<CustomTooltip />} />
+                            <Legend wrapperStyle={{ fontSize: '12px' }} />
+                            <Bar dataKey="prev" name="전월" fill="#8884d8" barSize={40} />
+                            <Bar dataKey="curr" name="금월" fill="#82ca9d" barSize={40} />
                         </BarChart>
                     </ResponsiveContainer>
                 </Box>
-                <Alert variant="light" color="gray" title="세부 현황">
-                    <Stack gap="xs">
-                        <Text size="sm"><b>① 상품 1담당 (생활/식품/무형 등)</b>: 전체 비중 36.9% (▼ 3.3%p). 건강식품(▼3.4%p) 감소폭 최대.</Text>
-                        <Text size="sm"><b>② 상품 2담당 (패션/뷰티)</b>: 전체 비중 28.9% (▼ 5.3%p). 의류(▼4.4%p) 급감.</Text>
-                        <Text size="sm"><b>③ 상품 3담당 (레포츠/브랜드패션)</b>: 전체 비중 24.2% (▼ 1.1%p). 레포츠(▲1.9%p) 유일 증가.</Text>
+                <Box mt="md">
+                    <Text size="sm" mb="xs">당사 상품3담당 비중은 28.2%이며, 상품1담당 38.5%, 상품2담당 31.7% 순으로 구성됨.</Text>
+                    <Stack gap="sm">
+                        <Box>
+                            <Text size="sm" fw={700}>1) 상품1담당 (생활/식품/건강/무형)</Text>
+                            <Text size="xs" pl="sm">• <b>비중:</b> 38.5% (전월 대비 -1.7%p)</Text>
+                            <Text size="xs" pl="sm">• <b>세부 구성:</b> 건강식품 18.4% (▼1.7%p), 무형(여행/보험) 9.7%, 생활가전 6.4%, 리빙 5.2%</Text>
+                        </Box>
+                        <Box>
+                            <Text size="sm" fw={700}>2) 상품2담당 (패션/뷰티)</Text>
+                            <Text size="xs" pl="sm">• <b>비중:</b> 31.7% (전월 대비 -2.6%p)</Text>
+                            <Text size="xs" pl="sm">• <b>세부 구성:</b> 의류 18.2% (▼1.9%p), 뷰티 13.1% (▼1.0%p), 잡화 0.3%</Text>
+                        </Box>
+                        <Box>
+                            <Text size="sm" fw={700}>3) 상품3담당 (레포츠/언더웨어/브랜드)</Text>
+                            <Text size="xs" pl="sm">• <b>비중:</b> 28.2% (전월 대비 +2.9%p)</Text>
+                            <Text size="xs" pl="sm">• <b>세부 구성:</b> 레포츠 16.0% (▲4.0%p), 브랜드패션 7.5%, 언더웨어 4.7%</Text>
+                        </Box>
                     </Stack>
-                </Alert>
+                </Box>
             </Box>
 
             <Divider />
 
             {/* Section 2 */}
             <Box>
-                <Title order={4} mb="sm" c="violet">2. 경쟁사별 편성 데이터 현황</Title>
-                <Box h={300}>
+                <Title order={4} mb="sm" c="violet">2. 경쟁사별 현황</Title>
+                <Box h={380}>
                     <ResponsiveContainer width="100%" height="100%">
                         <BarChart
                             layout="vertical"
                             data={[
-                                { name: '현대', div1: 41.0, div2: 35.9, div3: 0, etc: 23.1 },
-                                { name: 'GS', div1: 49.0, div2: 35.6, div3: 0, etc: 15.4 },
-                                { name: '롯데', div1: 43.4, div2: 46.9, div3: 9.1, etc: 0.6 },
-                                { name: 'CJ', div1: 44.3, div2: 51.7, div3: 4.0, etc: 0 },
+                                { name: '현대', cloth: 18.0, beauty: 12.1, health: 11.9, leports: 4.0, living: 5.4, kitchen: 6.3, app: 2.3, food: 3.2, misc: 6.5, travel: 3.8, ins: 8.1, rental: 1.3, under: 0.8, others: 16.3 },
+                                { name: 'GS', cloth: 16.4, beauty: 20.0, health: 20.5, leports: 3.5, living: 10.5, kitchen: 3.5, app: 2.5, food: 3.8, misc: 2.0, travel: 2.9, ins: 6.9, rental: 1.4, under: 0.9, others: 5.2 },
+                                { name: '롯데', cloth: 23.5, beauty: 13.1, health: 13.6, leports: 8.5, living: 8.1, kitchen: 2.3, app: 3.1, food: 6.5, misc: 9.9, travel: 2.4, ins: 3.0, rental: 3.8, under: 0.9, others: 1.3 },
+                                { name: 'CJ', cloth: 23.0, beauty: 18.9, health: 20.4, leports: 3.2, living: 6.1, kitchen: 4.9, app: 1.3, food: 3.6, misc: 8.2, travel: 2.3, ins: 4.9, rental: 2.2, under: 0.8, others: 0.2 },
                             ]}
                             margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
                         >
                             <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis type="number" />
-                            <YAxis dataKey="name" type="category" width={60} />
-                            <RechartsTooltip />
-                            <Legend />
-                            <Bar dataKey="div1" name="상품1담당" stackId="a" fill="#8884d8" />
-                            <Bar dataKey="div2" name="상품2담당" stackId="a" fill="#82ca9d" />
-                            <Bar dataKey="div3" name="상품3담당" stackId="a" fill="#ffc658" />
-                            <Bar dataKey="etc" name="기타/미매핑" stackId="a" fill="#ff8042" />
+                            <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 12 }} tickFormatter={(value) => `${Math.round(value)}`} allowDecimals={false} />
+                            <YAxis dataKey="name" type="category" width={40} tick={{ fontSize: 12 }} />
+                            <RechartsTooltip content={<CustomTooltip />} />
+                            <Legend wrapperStyle={{ fontSize: '11px' }} />
+                            <Bar dataKey="cloth" name="의류" stackId="a" fill="#8884d8" />
+                            <Bar dataKey="beauty" name="뷰티" stackId="a" fill="#82ca9d" />
+                            <Bar dataKey="health" name="건강식품" stackId="a" fill="#ffc658" />
+                            <Bar dataKey="food" name="푸드" stackId="a" fill="#d0ed57" />
+                            <Bar dataKey="leports" name="레포츠" stackId="a" fill="#ff8042" />
+                            <Bar dataKey="living" name="리빙" stackId="a" fill="#0088fe" />
+                            <Bar dataKey="kitchen" name="주방" stackId="a" fill="#00c49f" />
+                            <Bar dataKey="app" name="가전" stackId="a" fill="#005f87" />
+                            <Bar dataKey="misc" name="잡화" stackId="a" fill="#a4de6c" />
+                            <Bar dataKey="travel" name="여행" stackId="a" fill="#8dd1e1" />
+                            <Bar dataKey="ins" name="보험" stackId="a" fill="#83a6ed" />
+                            <Bar dataKey="rental" name="렌탈" stackId="a" fill="#8e44ad" />
+                            <Bar dataKey="under" name="언더웨어" stackId="a" fill="#d35400" />
+                            <Bar dataKey="others" name="기타" stackId="a" fill="#e0e0e0" />
                         </BarChart>
                     </ResponsiveContainer>
                 </Box>
-                <Alert variant="light" color="gray" title="세부 현황">
-                    <Stack gap="xs">
-                        <Text size="sm"><b>롯데/CJ:</b> 패션/뷰티(2담당) 비중이 높음 (CJ 51.7%, 롯데 46.9%). CJ는 의류 비중 급증(23.5%).</Text>
-                        <Text size="sm"><b>현대/GS:</b> 상품1담당(식품/생활) 비중이 높으나, 현대는 미매핑(15.6%) 이슈 존재.</Text>
-                    </Stack>
-                </Alert>
+                <Stack gap="md" mt="md">
+                    <Box>
+                        <Text size="sm" fw={700}>1) 현대홈쇼핑</Text>
+                        <Text size="xs" pl="sm">• <b>편성 비중:</b> 상품1(42.4%) {'>'} 상품2(36.6%) {'>'} 상품3(4.9%)</Text>
+                        <Text size="xs" pl="sm">• <b>주요 데이터:</b> 상품1 비중 42.4% (▼10.5%p), 주방 6.3%</Text>
+                        <Text size="xs" pl="sm">• <b>상위 아이템:</b> 쿡셀 후라이팬(172분), 로보락(169분), 니카사 다리미(99분)</Text>
+                    </Box>
+                    <Box>
+                        <Text size="sm" fw={700}>2) GS샵</Text>
+                        <Text size="xs" pl="sm">• <b>편성 비중:</b> 상품1(52.0%) {'>'} 상품2(38.4%) {'>'} 상품3(4.3%)</Text>
+                        <Text size="xs" pl="sm">• <b>주요 데이터:</b> 건강식품 20.5%, 뷰티 20.0%, 패션 16.4%</Text>
+                        <Text size="xs" pl="sm">• <b>상위 아이템:</b> 로보락(188분), 비에날씬(469분), 다이슨(334분)</Text>
+                    </Box>
+                    <Box>
+                        <Text size="sm" fw={700}>3) 롯데홈쇼핑</Text>
+                        <Text size="xs" pl="sm">• <b>편성 비중:</b> 상품2(46.5%) {'>'} 상품1(42.8%) {'>'} 상품3(9.4%)</Text>
+                        <Text size="xs" pl="sm">• <b>주요 데이터:</b> 의류 23.5%, 잡화 9.9%</Text>
+                        <Text size="xs" pl="sm">• <b>상위 아이템:</b> LBL 니트(232분), 폴앤조 자켓(495분), 더케이예다함(21분)</Text>
+                    </Box>
+                    <Box>
+                        <Text size="sm" fw={700}>4) CJ온스타일</Text>
+                        <Text size="xs" pl="sm">• <b>편성 비중:</b> 상품2(50.1%) {'>'} 상품1(45.6%) {'>'} 상품3(3.9%)</Text>
+                        <Text size="xs" pl="sm">• <b>주요 데이터:</b> 상품2담당 50.1%, 의류 23.0% (▲5.5%p)</Text>
+                        <Text size="xs" pl="sm">• <b>상위 아이템:</b> 셀렙샵 패딩(862분), 비에날씬(358분), 휘슬러 냄비(202분)</Text>
+                    </Box>
+                </Stack>
             </Box>
 
             <Divider />
 
             {/* Section 3 */}
             <Box>
-                <Title order={4} mb="sm" c="violet">3. 카테고리별 비교 (당사 vs 경쟁사)</Title>
-                <Box h={350}>
-                    <ResponsiveContainer width="100%" height="100%">
-                        <BarChart
-                            data={[
-                                { name: '의류', shinsegae: 15.7, lotte: 23.9, cj: 23.5, hyundai: 17.2, gs: 15.0 },
-                                { name: '뷰티', shinsegae: 12.9, lotte: 13.0, cj: 19.0, hyundai: 12.0, gs: 18.7 },
-                                { name: '건강식품', shinsegae: 16.8, lotte: 13.8, cj: 19.3, hyundai: 11.2, gs: 19.7 },
-                                { name: '레포츠', shinsegae: 13.8, lotte: 8.2, cj: 3.2, hyundai: 4.2, gs: 3.5 },
-                                { name: '생활가전', shinsegae: 6.3, lotte: 14.3, cj: 10.6, hyundai: 13.1, gs: 15.4 },
-                            ]}
-                            margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                        >
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="name" />
-                            <YAxis label={{ value: '비중(%)', angle: -90, position: 'insideLeft' }} />
-                            <RechartsTooltip />
-                            <Legend />
-                            <Bar dataKey="shinsegae" name="당사" fill="#fa5252" />
-                            <Bar dataKey="lotte" name="롯데" fill="#EE3124" />
-                            <Bar dataKey="cj" name="CJ" fill="#6A00A6" />
-                            <Bar dataKey="hyundai" name="현대" fill="#119586" />
-                            <Bar dataKey="gs" name="GS" fill="#6CC218" />
-                        </BarChart>
-                    </ResponsiveContainer>
-                </Box>
-                <Alert variant="light" color="red" title="Insight">
-                    <Stack gap="xs">
-                        <Text size="sm"><b>당사 강세:</b> 레포츠(13.8%)는 경쟁사 대비 압도적 높음. 여행(4.7%)도 업계 최고 수준.</Text>
-                        <Text size="sm"><b>당사 약세:</b> 의류(15.7%)는 롯데/CJ 대비 8%p 낮음. 생활가전(6.3%)은 최하위.</Text>
+                <Title order={4} mb="lg" c="violet">3. 카테고리별 비교 (당사 vs 경쟁사)</Title>
+
+                {/* 3-1 Kitchen/Living */}
+                <Box mb="xl">
+                    <Title order={5} mb="xs">1) 주방 / 가전 / 리빙</Title>
+                    <Box h={200}>
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart
+                                data={[
+                                    { name: '주방', shinsegae: 1.2, lotte: 2.3, cj: 4.9, hyundai: 6.3, gs: 3.5 },
+                                    { name: '가전', shinsegae: 0.0, lotte: 3.1, cj: 1.3, hyundai: 2.3, gs: 2.5 },
+                                    { name: '리빙', shinsegae: 5.2, lotte: 8.1, cj: 6.1, hyundai: 5.4, gs: 10.5 },
+                                ]}
+                                margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+                                barGap={4}
+                            >
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                                <YAxis tick={{ fontSize: 12 }} />
+                                <RechartsTooltip content={<CustomTooltip />} />
+                                <Legend wrapperStyle={{ fontSize: '11px' }} />
+                                <Bar dataKey="shinsegae" name="당사" fill="#333333" />
+                                <Bar dataKey="lotte" name="롯데" fill="#EE3124" />
+                                <Bar dataKey="cj" name="CJ" fill="#6A00A6" />
+                                <Bar dataKey="hyundai" name="현대" fill="#119586" />
+                                <Bar dataKey="gs" name="GS" fill="#6CC218" />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </Box>
+                    <Stack gap={2} mt="xs">
+                        <Text size="xs"><b>주방:</b> 현대(6.3%) {'>'} CJ(4.9%) {'>'} GS(3.5%) {'>'} 롯데(2.3%) {'>'} 당사(1.2%)</Text>
+                        <Text size="xs" c="dimmed" pl="sm" mb={4}>주요 아이템: 쿡셀 후라이팬(현대), 휘슬러 냄비(CJ), 타파웨어(GS).</Text>
+                        <Text size="xs"><b>가전:</b> 롯데(3.1%) {'>'} GS(2.5%) {'>'} 현대(2.3%) {'>'} CJ(1.3%) {'>'} 당사(0.0%)</Text>
+                        <Text size="xs" c="dimmed" pl="sm" mb={4}>주요 아이템: 로보락 무선청소기(롯데, GS, 현대), LG전자 건조기(현대).</Text>
+                        <Text size="xs"><b>리빙:</b> GS(10.5%) {'>'} 롯데(8.1%) {'>'} CJ(6.1%) {'>'} 현대(5.4%) {'>'} 당사(5.2%)</Text>
+                        <Text size="xs" c="dimmed" pl="sm">주요 아이템: 조선호텔 침구(GS), 일월 전기매트(현대), 코웨이 공기청정기(CJ).</Text>
                     </Stack>
-                </Alert>
+                </Box>
+
+                {/* 3-2 Food/Health */}
+                <Box mb="xl">
+                    <Title order={5} mb="xs">2) 푸드 / 건강식품</Title>
+                    <Box h={200}>
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart
+                                data={[
+                                    { name: '푸드', shinsegae: 4.1, lotte: 6.5, cj: 3.6, hyundai: 3.2, gs: 3.8 },
+                                    { name: '건강식품', shinsegae: 18.4, lotte: 13.6, cj: 20.4, hyundai: 11.9, gs: 20.5 },
+                                ]}
+                                margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+                                barGap={4}
+                            >
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                                <YAxis tick={{ fontSize: 12 }} />
+                                <RechartsTooltip content={<CustomTooltip />} />
+                                <Legend wrapperStyle={{ fontSize: '11px' }} />
+                                <Bar dataKey="shinsegae" name="당사" fill="#333333" />
+                                <Bar dataKey="lotte" name="롯데" fill="#EE3124" />
+                                <Bar dataKey="cj" name="CJ" fill="#6A00A6" />
+                                <Bar dataKey="hyundai" name="현대" fill="#119586" />
+                                <Bar dataKey="gs" name="GS" fill="#6CC218" />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </Box>
+                    <Stack gap={2} mt="xs">
+                        <Text size="xs"><b>푸드:</b> 롯데(6.5%) {'>'} 당사(4.1%) {'>'} GS(3.8%) {'>'} CJ(3.6%) {'>'} 현대(3.2%)</Text>
+                        <Text size="xs" c="dimmed" pl="sm" mb={4}>주요 아이템: 김치(GS), 고등어(현대), 낫또(롯데).</Text>
+                        <Text size="xs"><b>건강식품:</b> GS(20.5%) {'>'} CJ(20.4%) {'>'} 당사(18.4%) {'>'} 롯데(13.6%) {'>'} 현대(11.9%)</Text>
+                        <Text size="xs" c="dimmed" pl="sm">주요 아이템: 비에날씬 유산균(GS/CJ), 여에스더 글루타치온(롯데).</Text>
+                    </Stack>
+                </Box>
+
+                {/* 3-3 Travel/Ins/Rental */}
+                <Box mb="xl">
+                    <Title order={5} mb="xs">3) 여행 / 보험 / 렌탈</Title>
+                    <Box h={200}>
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart
+                                data={[
+                                    { name: '여행', shinsegae: 4.7, lotte: 2.4, cj: 2.3, hyundai: 3.8, gs: 2.9 },
+                                    { name: '보험', shinsegae: 2.9, lotte: 3.0, cj: 4.9, hyundai: 8.1, gs: 6.9 },
+                                    { name: '일반렌탈', shinsegae: 0.6, lotte: 3.8, cj: 2.2, hyundai: 1.2, gs: 1.4 },
+                                    { name: '대품렌탈', shinsegae: 1.6, lotte: 0.0, cj: 0.0, hyundai: 0.1, gs: 0.0 },
+                                ]}
+                                margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+                                barGap={4}
+                            >
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                                <YAxis tick={{ fontSize: 12 }} />
+                                <RechartsTooltip content={<CustomTooltip />} />
+                                <Legend wrapperStyle={{ fontSize: '11px' }} />
+                                <Bar dataKey="shinsegae" name="당사" fill="#333333" />
+                                <Bar dataKey="lotte" name="롯데" fill="#EE3124" />
+                                <Bar dataKey="cj" name="CJ" fill="#6A00A6" />
+                                <Bar dataKey="hyundai" name="현대" fill="#119586" />
+                                <Bar dataKey="gs" name="GS" fill="#6CC218" />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </Box>
+                    <Stack gap={2} mt="xs">
+                        <Text size="xs"><b>여행:</b> 당사(4.7%) {'>'} 현대(3.8%) {'>'} GS(2.9%) {'>'} 롯데(2.4%) {'>'} CJ(2.3%)</Text>
+                        <Text size="xs" c="dimmed" pl="sm" mb={4}>주요 아이템: 롯데관광 서유럽(당사), 교원투어 동유럽(GS).</Text>
+                        <Text size="xs"><b>보험:</b> 현대(8.1%) {'>'} GS(6.9%) {'>'} CJ(4.9%) {'>'} 롯데(3.0%) {'>'} 당사(2.9%)</Text>
+                        <Text size="xs" c="dimmed" pl="sm" mb={4}>주요 아이템: 신한라이프(현대), 라이나생명(CJ).</Text>
+                        <Text size="xs"><b>일반렌탈:</b> 롯데(3.8%) {'>'} CJ(2.2%) {'>'} GS(1.4%) {'>'} 현대(1.2%) {'>'} 당사(0.6%)</Text>
+                        <Text size="xs" c="dimmed" pl="sm" mb={4}>주요 아이템: 코웨이 정수기(롯데), 바디프랜드 안마의자(롯데).</Text>
+                        <Text size="xs"><b>대품렌탈:</b> 당사(1.6%) {'>'} 현대(0.1%) {'>'} GS(0.0%) = 롯데(0.0%) = CJ(0.0%)</Text>
+                        <Text size="xs" c="dimmed" pl="sm">주요 아이템: 더케이예다함상조(당사).</Text>
+                    </Stack>
+                </Box>
+
+                {/* 3-4 Clothing/Beauty */}
+                <Box mb="xl">
+                    <Title order={5} mb="xs">4) 의류 / 잡화 / 뷰티</Title>
+                    <Box h={200}>
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart
+                                data={[
+                                    { name: '의류', shinsegae: 18.2, lotte: 23.5, cj: 23.0, hyundai: 18.0, gs: 16.4 },
+                                    { name: '잡화', shinsegae: 0.3, lotte: 9.9, cj: 8.2, hyundai: 6.5, gs: 2.0 },
+                                    { name: '뷰티', shinsegae: 13.1, lotte: 13.1, cj: 18.9, hyundai: 12.1, gs: 20.0 },
+                                ]}
+                                margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+                                barGap={4}
+                            >
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                                <YAxis tick={{ fontSize: 12 }} />
+                                <RechartsTooltip content={<CustomTooltip />} />
+                                <Legend wrapperStyle={{ fontSize: '11px' }} />
+                                <Bar dataKey="shinsegae" name="당사" fill="#333333" />
+                                <Bar dataKey="lotte" name="롯데" fill="#EE3124" />
+                                <Bar dataKey="cj" name="CJ" fill="#6A00A6" />
+                                <Bar dataKey="hyundai" name="현대" fill="#119586" />
+                                <Bar dataKey="gs" name="GS" fill="#6CC218" />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </Box>
+                    <Stack gap={2} mt="xs">
+                        <Text size="xs"><b>의류:</b> 롯데(23.5%) {'>'} CJ(23.0%) {'>'} 당사(18.2%) {'>'} 현대(18.0%) {'>'} GS(16.4%)</Text>
+                        <Text size="xs" c="dimmed" pl="sm" mb={4}>주요 아이템: LBL/폴앤조(롯데), 셀렙샵에디션(CJ), 라삐아프(GS).</Text>
+                        <Text size="xs"><b>잡화:</b> 롯데(9.9%) {'>'} CJ(8.2%) {'>'} 현대(6.5%) {'>'} GS(2.0%) {'>'} 당사(0.3%)</Text>
+                        <Text size="xs" c="dimmed" pl="sm" mb={4}>주요 아이템: 가이거 토트백(롯데), 헬시온 부츠(현대), 락포트 부츠(CJ).</Text>
+                        <Text size="xs"><b>뷰티:</b> GS(20.0%) {'>'} CJ(18.9%) {'>'} 롯데(13.1%) = 당사(13.1%) {'>'} 현대(12.1%)</Text>
+                        <Text size="xs" c="dimmed" pl="sm">주요 아이템: 다이슨(GS/CJ), 동국제약 팩(CJ), 도미나스(롯데).</Text>
+                    </Stack>
+                </Box>
+
+                {/* 3-5 Leports/Under */}
+                <Box mb="xl">
+                    <Title order={5} mb="xs">5) 레포츠 / 언더웨어</Title>
+                    <Box h={200}>
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart
+                                data={[
+                                    { name: '레포츠', shinsegae: 16.0, lotte: 8.5, cj: 3.2, hyundai: 4.0, gs: 3.5 },
+                                    { name: '언더웨어', shinsegae: 4.7, lotte: 0.9, cj: 0.8, hyundai: 0.8, gs: 0.9 },
+                                    { name: '브랜드P', shinsegae: 7.5, lotte: 0.0, cj: 0.0, hyundai: 0.0, gs: 0.0 },
+                                ]}
+                                margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+                                barGap={4}
+                            >
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                                <YAxis tick={{ fontSize: 12 }} />
+                                <RechartsTooltip content={<CustomTooltip />} />
+                                <Legend wrapperStyle={{ fontSize: '11px' }} />
+                                <Bar dataKey="shinsegae" name="당사" fill="#333333" />
+                                <Bar dataKey="lotte" name="롯데" fill="#EE3124" />
+                                <Bar dataKey="cj" name="CJ" fill="#6A00A6" />
+                                <Bar dataKey="hyundai" name="현대" fill="#119586" />
+                                <Bar dataKey="gs" name="GS" fill="#6CC218" />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </Box>
+                    <Stack gap={2} mt="xs">
+                        <Text size="xs"><b>레포츠:</b> 당사(16.0%) {'>'} 롯데(8.5%) {'>'} 현대(4.0%) {'>'} GS(3.5%) {'>'} CJ(3.2%)</Text>
+                        <Text size="xs" c="dimmed" pl="sm" mb={4}>주요 아이템: 비버리힐즈폴로클럽 패딩(당사), 휠라 운동화(롯데).</Text>
+                        <Text size="xs"><b>언더웨어:</b> 당사(4.7%) {'>'} GS(0.9%) = 롯데(0.9%) {'>'} 현대(0.8%) = CJ(0.8%)</Text>
+                        <Text size="xs" c="dimmed" pl="sm" mb={4}>주요 아이템: 아날도바시니 내의(당사), 코데즈컴바인(현대).</Text>
+                        <Text size="xs"><b>브랜드패션:</b> 당사(7.5%) {'>'} 현대(0.0%) = GS(0.0%) = 롯데(0.0%) = CJ(0.0%)</Text>
+                        <Text size="xs" c="dimmed" pl="sm">특이사항: 당사 단독 편성 카테고리.</Text>
+                    </Stack>
+                </Box>
             </Box>
         </Stack>
     );
