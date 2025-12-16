@@ -19,11 +19,10 @@ import {
     Button,
     SegmentedControl,
     Alert,
-    ScrollArea
 } from '@mantine/core';
 import { DatePickerInput } from '@mantine/dates';
 import { IconBell, IconCalendar, IconChevronLeft, IconChevronRight, IconChevronDown, IconChevronUp, IconSparkles } from '@tabler/icons-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer } from 'recharts';
 import { useRouter } from 'next/navigation';
 import { useDisclosure } from '@mantine/hooks';
 import dayjs from 'dayjs';
@@ -662,22 +661,23 @@ function ScheduleCell({ entries, onCardClick }: ScheduleCellProps) {
     );
 };
 
+function CustomTooltip({ active, payload, label }: any) {
+    if (active && payload && payload.length) {
+        return (
+            <div style={{ backgroundColor: 'white', padding: '10px', border: '1px solid #ccc', fontSize: '12px' }}>
+                <p style={{ fontWeight: 'bold', marginBottom: '5px' }}>{label}</p>
+                {payload.map((p: any) => (
+                    <p key={p.name} style={{ color: p.color, margin: 0 }}>
+                        {p.name}: {p.value}%
+                    </p>
+                ))}
+            </div>
+        );
+    }
+    return null;
+}
+
 function AiSummaryContent() {
-    const CustomTooltip = ({ active, payload, label }: any) => {
-        if (active && payload && payload.length) {
-            return (
-                <div style={{ backgroundColor: 'white', padding: '10px', border: '1px solid #ccc', fontSize: '12px' }}>
-                    <p style={{ fontWeight: 'bold', marginBottom: '5px' }}>{label}</p>
-                    {payload.map((p: any) => (
-                        <p key={p.name} style={{ color: p.color, margin: 0 }}>
-                            {p.name}: {p.value}%
-                        </p>
-                    ))}
-                </div>
-            );
-        }
-        return null;
-    };
 
     return (
         <Stack gap="xl">
