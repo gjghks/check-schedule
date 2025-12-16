@@ -114,18 +114,23 @@ export default function ScheduleDashboard({ schedules, availableDates, currentDa
         // I should use chunks carefully.
 
         schedules.forEach(row => {
-            const dateRaw = row.bd_date;
-            if (map.has(dateRaw)) {
-                const hourMap = map.get(dateRaw)!;
-                // ...
-                if (row.bd_btime) {
+            // 1. Shinsegae Item (Uses BD_DATE)
+            if (row.bd_btime) {
+                const sDate = row.bd_date;
+                if (map.has(sDate)) {
+                    const hourMap = map.get(sDate)!;
                     const sTimeStr = row.bd_btime;
                     const sHour = parseInt(sTimeStr.split(':')[0], 10);
                     if (!hourMap.has(sHour)) hourMap.set(sHour, []);
                     hourMap.get(sHour)!.push({ isShinsegae: true, item: row });
                 }
+            }
 
-                if (row.other_broad_name) {
+            // 2. Competitor Item (Uses BD_EDATE)
+            if (row.other_broad_name) {
+                const cDate = row.bd_edate || row.bd_date; // Use BD_EDATE as requested
+                if (map.has(cDate)) {
+                    const hourMap = map.get(cDate)!;
                     const cTimeStr = row.other_btime || '00:00:00';
                     const cHour = parseInt(cTimeStr.split(':')[0], 10);
                     if (!hourMap.has(cHour)) hourMap.set(cHour, []);
@@ -338,6 +343,7 @@ export default function ScheduleDashboard({ schedules, availableDates, currentDa
                                             // Deduplicate Logic (Same unique check)
                                             const uniqueEntries: { isShinsegae: boolean, item: ScheduleRow }[] = [];
                                             const sTimeSet = new Set<string>();
+                                            const cTimeSet = new Set<string>();
 
                                             entries.forEach(e => {
                                                 if (e.isShinsegae) {
@@ -347,7 +353,15 @@ export default function ScheduleDashboard({ schedules, availableDates, currentDa
                                                         uniqueEntries.push(e);
                                                     }
                                                 } else {
-                                                    uniqueEntries.push(e);
+                                                    // Competitor deduplication by Channel + Start Time
+                                                    const channel = e.item.other_broad_name || '';
+                                                    const bTime = e.item.other_btime || '';
+                                                    const key = `${channel}_${bTime}`;
+
+                                                    if (!cTimeSet.has(key)) {
+                                                        cTimeSet.add(key);
+                                                        uniqueEntries.push(e);
+                                                    }
                                                 }
                                             });
 

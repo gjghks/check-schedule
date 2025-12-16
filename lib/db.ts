@@ -52,6 +52,12 @@ export interface ScheduleRow {
     other_item_desc?: string;
     other_item_tag?: string;
 
+    // Added from Competitor data
+    other_bhour?: string;
+    bd_edate?: string;
+    product_link_url?: string;
+    product_image_url?: string;
+
     match_score?: number;
     sche_sml_score?: number;
     item_sml_score?: number;

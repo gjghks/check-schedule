@@ -145,9 +145,19 @@ export default function CompetitorPivot({ schedules }: Props) {
             sets[KEY_MD].add(row.other_md_name_1 || '(없음)');
         });
 
+        // Defined Order
+        const PREFERRED_ORDER = ['현대홈쇼핑', 'GS홈쇼핑', '롯데홈쇼핑', 'CJ온스타일', 'CJ홈쇼핑', 'SK스토아', 'KT알파'];
+
         // Convert to Arrays sorted
         return {
-            broadcasters: Array.from(sets[KEY_BROADCASTER]).sort(),
+            broadcasters: Array.from(sets[KEY_BROADCASTER]).sort((a, b) => {
+                const idxA = PREFERRED_ORDER.indexOf(a);
+                const idxB = PREFERRED_ORDER.indexOf(b);
+                if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+                if (idxA !== -1) return -1;
+                if (idxB !== -1) return 1;
+                return a.localeCompare(b);
+            }),
             mids: Array.from(sets[KEY_MID]).sort(),
             smalls: Array.from(sets[KEY_SMALL]).sort(),
             brands: Array.from(sets[KEY_BRAND]).sort(),
