@@ -63,6 +63,7 @@ export interface ScheduleRow {
     item_sml_score?: number;
     comp_alert?: string;
     sml_rsn?: string;
+    sales_amt?: number;
     create_dtm?: string;
     create_name?: string;
 }

@@ -19,6 +19,7 @@ import {
     Button,
     SegmentedControl,
     Alert,
+    Image,
 } from '@mantine/core';
 import { DatePickerInput } from '@mantine/dates';
 import { IconBell, IconCalendar, IconChevronLeft, IconChevronRight, IconChevronDown, IconChevronUp, IconSparkles } from '@tabler/icons-react';
@@ -58,6 +59,21 @@ const parseTime = (timeStr: string | undefined | null): number => {
     const parts = timeStr.split(':');
     if (parts.length < 2) return 0;
     return parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
+};
+
+// Helper: Format Sales Amount (10k unit)
+const formatSalesAmount = (amount: number | undefined | null) => {
+    if (amount === undefined || amount === null) return '';
+    const unitVal = Math.floor(amount / 10000);
+    if (unitVal === 0) return '';
+
+    if (unitVal >= 10000) {
+        const eok = Math.floor(unitVal / 10000);
+        const man = unitVal % 10000;
+        if (man === 0) return `${eok}억원`;
+        return `${eok}억${man.toLocaleString()}만원`;
+    }
+    return `${unitVal.toLocaleString()}만원`;
 };
 
 // ... (Sub Components ScheduleCard etc omitted, keep existing) ...
@@ -423,8 +439,26 @@ export default function ScheduleDashboard({ schedules, availableDates, currentDa
 
                     return (
                         <Stack>
-                            <Title order={4}>{productName}</Title>
+                            <Title
+                                order={4}
+                                style={(!isShinsegae && selectedItem.product_link_url) ? { cursor: 'pointer', textDecoration: 'underline', color: '#228be6' } : {}}
+                                onClick={() => {
+                                    if (!isShinsegae && selectedItem.product_link_url) {
+                                        window.open(selectedItem.product_link_url, '_blank');
+                                    }
+                                }}
+                            >
+                                {productName}
+                            </Title>
                             <Divider />
+                            {/* Product Image */}
+                            {!isShinsegae && selectedItem.product_image_url && (
+                                <ProductImage
+                                    url={selectedItem.product_image_url}
+                                    alt={productName}
+                                    link={selectedItem.product_link_url}
+                                />
+                            )}
                             <Group grow>
                                 <Box>
                                     <Text c="dimmed" size="xs">방송시간</Text>
@@ -445,6 +479,12 @@ export default function ScheduleDashboard({ schedules, availableDates, currentDa
                                     <Text c="dimmed" size="xs">가중분</Text>
                                     <Text fw={700} size="lg">{selectedItem.weights_time ? selectedItem.weights_time : '-'}</Text>
                                 </Box>
+                                {!isShinsegae && (selectedItem.sales_amt || 0) > 0 && (
+                                    <Box>
+                                        <Text c="dimmed" size="xs">매출</Text>
+                                        <Text fw={700} size="lg" c="blue">{formatSalesAmount(selectedItem.sales_amt)}</Text>
+                                    </Box>
+                                )}
                             </Group>
 
                             <Box>
@@ -520,6 +560,7 @@ function ScheduleCard({ entry, onClick }: ScheduleCardProps) {
     const isAlert = !isShinsegae && (((item.sche_sml_score || 0) >= 6) || ((item.item_sml_score || 0) >= 1.5));
     const showBell = isAlert || (item.comp_alert && item.comp_alert.trim() !== '');
 
+    const salesAmtStr = !isShinsegae ? formatSalesAmount(item.sales_amt) : '';
     const price = item.product_sale_price || 0;
 
     const tooltipLabel = (
@@ -545,7 +586,7 @@ function ScheduleCard({ entry, onClick }: ScheduleCardProps) {
                 }}
             >
                 {/* Header: Logo + Time */}
-                <Group gap={4} wrap="nowrap" mb={2}>
+                <Group gap={4} wrap="nowrap" mb={2} w="100%">
                     <Badge
                         size="xs"
                         variant="filled"
@@ -558,6 +599,11 @@ function ScheduleCard({ entry, onClick }: ScheduleCardProps) {
                     <Text size="xs" fw={700} style={{ fontSize: '10px' }}>
                         {displayTimeStart} ~ {displayTimeEnd}
                     </Text>
+                    {salesAmtStr && (
+                        <Text size="xs" fw={700} c="blue" style={{ fontSize: '10px', marginLeft: 'auto' }}>
+                            {salesAmtStr}
+                        </Text>
+                    )}
                 </Group>
 
                 {/* Body: Cat | Name */}
@@ -674,6 +720,43 @@ function ScheduleCell({ entries, onCardClick }: ScheduleCellProps) {
         </Box>
     );
 };
+
+function ProductImage({ url, alt, link }: { url: string, alt: string, link?: string }) {
+    const [error, setError] = useState(false);
+
+    // Fix URL entities
+    const fixedUrl = (url || '').replace(/&amp;/g, '&');
+
+    if (error || !fixedUrl) return null;
+
+    return (
+        <Box
+            style={{
+                display: 'flex',
+                justifyContent: 'center',
+                backgroundColor: '#f8f9fa',
+                borderRadius: 8,
+                padding: 10,
+                cursor: link ? 'pointer' : 'default'
+            }}
+            onClick={() => {
+                if (link) {
+                    window.open(link, '_blank');
+                }
+            }}
+        >
+            <Image
+                src={fixedUrl}
+                alt={alt}
+                h={200}
+                w="auto"
+                fit="contain"
+                radius="md"
+                onError={() => setError(true)}
+            />
+        </Box>
+    );
+}
 
 function CustomTooltip({ active, payload, label }: any) {
     if (active && payload && payload.length) {
