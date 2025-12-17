@@ -35,9 +35,8 @@ const KEY_BRAND = 'other_brand_name';
 const KEY_PRODUCT = 'other_product_name';
 const KEY_MD = 'other_md_name_1';
 
-// Helper to get value
 const getValue = (row: ScheduleRow, key: string): string => {
-    return (row as any)[key] || '(없음)';
+    return (row as any)[key] || '(미매핑)';
 };
 
 // Header Filter Component
@@ -137,16 +136,18 @@ export default function CompetitorPivot({ schedules }: Props) {
         };
 
         schedules.forEach(row => {
-            sets[KEY_BROADCASTER].add(row.other_broad_name || '(없음)');
-            sets[KEY_MID].add(row.other_mgroupn_name || '(없음)');
-            sets[KEY_SMALL].add(row.other_sgroupn_name || '(없음)');
-            sets[KEY_BRAND].add(row.other_brand_name || '(없음)');
-            sets[KEY_PRODUCT].add(row.other_product_name || '(없음)');
-            sets[KEY_MD].add(row.other_md_name_1 || '(없음)');
+            sets[KEY_BROADCASTER].add(row.other_broad_name || '(미매핑)');
+            sets[KEY_MID].add(row.other_mgroupn_name || '(미매핑)');
+            sets[KEY_SMALL].add(row.other_sgroupn_name || '(미매핑)');
+            sets[KEY_BRAND].add(row.other_brand_name || '(미매핑)');
+            sets[KEY_PRODUCT].add(row.other_product_name || '(미매핑)');
+            sets[KEY_MD].add(row.other_md_name_1 || '(미매핑)');
         });
 
         // Defined Order
         const PREFERRED_ORDER = ['현대홈쇼핑', 'GS홈쇼핑', '롯데홈쇼핑', 'CJ온스타일', 'CJ홈쇼핑', 'SK스토아', 'KT알파'];
+
+        const MD_CAT_ORDER = ['주방', '가전', '리빙', '푸드', '건강식품', '여행', '보험', '일반렌탈', '대품렌탈', '의류', '잡화', '뷰티', '레포츠', '언더웨어', '브랜드패션', '미매핑', '(미매핑)', '(없음)'];
 
         // Convert to Arrays sorted
         return {
@@ -162,7 +163,14 @@ export default function CompetitorPivot({ schedules }: Props) {
             smalls: Array.from(sets[KEY_SMALL]).sort(),
             brands: Array.from(sets[KEY_BRAND]).sort(),
             products: Array.from(sets[KEY_PRODUCT]).sort(),
-            mds: Array.from(sets[KEY_MD]).sort(),
+            mds: Array.from(sets[KEY_MD]).sort((a, b) => {
+                const idxA = MD_CAT_ORDER.indexOf(a);
+                const idxB = MD_CAT_ORDER.indexOf(b);
+                if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+                if (idxA !== -1) return -1; // Specific order comes first
+                if (idxB !== -1) return 1;
+                return a.localeCompare(b);
+            }),
         };
     }, [schedules]);
 
@@ -175,7 +183,7 @@ export default function CompetitorPivot({ schedules }: Props) {
             // Filter Mids: Only those with valid Small AND Brand
             const validMids = new Set<string>();
             schedules.forEach(row => {
-                const mid = row.other_mgroupn_name || '(없음)';
+                const mid = row.other_mgroupn_name || '(미매핑)';
                 const small = row.other_sgroupn_name;
                 const brand = row.other_brand_name;
                 if (small && brand) {
@@ -207,12 +215,12 @@ export default function CompetitorPivot({ schedules }: Props) {
         if (Object.keys(selectedFilters).length === 0) return schedules;
 
         return schedules.filter(row => {
-            const b = row.other_broad_name || '(없음)';
-            const m = row.other_mgroupn_name || '(없음)';
-            const s = row.other_sgroupn_name || '(없음)';
-            const br = row.other_brand_name || '(없음)';
-            const p = row.other_product_name || '(없음)';
-            const md = row.other_md_name_1 || '(없음)';
+            const b = row.other_broad_name || '(미매핑)';
+            const m = row.other_mgroupn_name || '(미매핑)';
+            const s = row.other_sgroupn_name || '(미매핑)';
+            const br = row.other_brand_name || '(미매핑)';
+            const p = row.other_product_name || '(미매핑)';
+            const md = row.other_md_name_1 || '(미매핑)';
 
             // Safe check: if key not in filter (not initialized?), assume true
             if (selectedFilters[KEY_BROADCASTER] && !selectedFilters[KEY_BROADCASTER].has(b)) return false;
@@ -237,30 +245,38 @@ export default function CompetitorPivot({ schedules }: Props) {
     };
 
     const tree = useMemo(() => {
-        const root = new Map<string, TreeItem>(); // Key: Mid
+        const root = new Map<string, TreeItem>(); // Key: MD CAT
 
         filteredData.forEach(row => {
-            const mid = row.other_mgroupn_name || '(없음)';
-            const small = row.other_sgroupn_name || '(없음)';
-            const brand = row.other_brand_name || '(없음)';
-            const broadcaster = row.other_broad_name || '(없음)';
-            const weight = (row.weights_time || 0) / 60; // Minutes to Hours? Or Minutes? User said 'weights_time / 60'. Assuming weights_time is minutes, result is hours.
+            const md = row.other_md_name_1 || '(미매핑)';
+            const mid = row.other_mgroupn_name || '(미매핑)';
+            const small = row.other_sgroupn_name || '(미매핑)';
+            const brand = row.other_brand_name || '(미매핑)';
+            const broadcaster = row.other_broad_name || '(미매핑)';
+            const weight = (row.weights_time || 0) / 60; // Minutes to Hours
 
-            // 1. Mid Node
-            if (!root.has(mid)) {
-                root.set(mid, { name: mid, isLeaf: false, children: new Map(), values: {} });
+            // 1. MD Node (Root)
+            if (!root.has(md)) {
+                root.set(md, { name: md, isLeaf: false, children: new Map(), values: {} });
             }
-            const midNode = root.get(mid)!;
+            const mdNode = root.get(md)!;
+            mdNode.values[broadcaster] = (mdNode.values[broadcaster] || 0) + weight;
+
+            // 2. Mid Node
+            if (!mdNode.children!.has(mid)) {
+                mdNode.children!.set(mid, { name: mid, isLeaf: false, children: new Map(), values: {} });
+            }
+            const midNode = mdNode.children!.get(mid)!;
             midNode.values[broadcaster] = (midNode.values[broadcaster] || 0) + weight;
 
-            // 2. Small Node
+            // 3. Small Node
             if (!midNode.children!.has(small)) {
                 midNode.children!.set(small, { name: small, isLeaf: false, children: new Map(), values: {} });
             }
             const smallNode = midNode.children!.get(small)!;
             smallNode.values[broadcaster] = (smallNode.values[broadcaster] || 0) + weight;
 
-            // 3. Brand Node (Leaf in this view, though it might aggregate multiple rows)
+            // 4. Brand Node (Leaf)
             if (!smallNode.children!.has(brand)) {
                 smallNode.children!.set(brand, { name: brand, isLeaf: true, values: {} });
             }
@@ -278,21 +294,21 @@ export default function CompetitorPivot({ schedules }: Props) {
         return list.filter(b => selectedFilters[KEY_BROADCASTER].has(b));
     }, [uniqueValues.broadcasters, selectedFilters]);
 
-    // 7. Calculate Top 5 Mids for Ranking
-    const top5Mids = useMemo(() => {
-        const midTotals: { name: string, total: number }[] = [];
+    // 7. Calculate Top 5 Roots (MD Cats) for Ranking
+    const top5Roots = useMemo(() => {
+        const rootTotals: { name: string, total: number }[] = [];
         tree.forEach((node) => {
             // Calculate total for visible columns only
             const total = columns.reduce((acc, col) => acc + (node.values[col] || 0), 0);
-            midTotals.push({ name: node.name, total });
+            rootTotals.push({ name: node.name, total });
         });
 
         // Sort descending
-        midTotals.sort((a, b) => b.total - a.total);
+        rootTotals.sort((a, b) => b.total - a.total);
 
         // Take top 5 and map to rank (1-based)
         const rankMap = new Map<string, number>();
-        midTotals.slice(0, 5).forEach((item, index) => {
+        rootTotals.slice(0, 5).forEach((item, index) => {
             if (item.total > 0) { // Only rank if total > 0
                 rankMap.set(item.name, index + 1);
             }
@@ -313,8 +329,18 @@ export default function CompetitorPivot({ schedules }: Props) {
 
     // Render Row Helper
     const renderRows = (nodes: Map<string, TreeItem>, level: number, parentId: string) => {
-        // Sort nodes by name?
-        const sortedNodes = Array.from(nodes.values()).sort((a, b) => a.name.localeCompare(b.name));
+        const MD_CAT_ORDER = ['주방', '가전', '리빙', '푸드', '건강식품', '여행', '보험', '일반렌탈', '대품렌탈', '의류', '잡화', '뷰티', '레포츠', '언더웨어', '브랜드패션', '미매핑', '(미매핑)', '(없음)'];
+
+        const sortedNodes = Array.from(nodes.values()).sort((a, b) => {
+            if (level === 0) {
+                const idxA = MD_CAT_ORDER.indexOf(a.name);
+                const idxB = MD_CAT_ORDER.indexOf(b.name);
+                if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+                if (idxA !== -1) return -1;
+                if (idxB !== -1) return 1;
+            }
+            return a.name.localeCompare(b.name);
+        });
 
         return sortedNodes.map(node => {
             const id = parentId ? `${parentId}-${node.name}` : node.name;
@@ -324,7 +350,7 @@ export default function CompetitorPivot({ schedules }: Props) {
             const hasChildren = !node.isLeaf && node.children && node.children.size > 0;
 
             // Ranking Logic (Only for Level 0)
-            const rank = (level === 0) ? top5Mids.get(node.name) : undefined;
+            const rank = (level === 0) ? top5Roots.get(node.name) : undefined;
             let rowBg = level === 0 ? '#f8f9fa' : (level === 1 ? '#fff' : '#fafafa'); // Default
             let badge = null;
 
@@ -397,22 +423,24 @@ export default function CompetitorPivot({ schedules }: Props) {
                         onChange={(s) => handleFilterChange(KEY_PRODUCT, s)}
                     />
                 </Box>
-                <Box style={{ width: 200 }}>
-                    <FilterHeader
-                        label="MD CAT (Filter)"
-                        values={uniqueValues.mds}
-                        selected={selectedFilters[KEY_MD] || new Set()}
-                        onChange={(s) => handleFilterChange(KEY_MD, s)}
-                    />
-                </Box>
             </Group>
 
             <ScrollArea style={{ flex: 1 }} type="auto">
                 <Table withTableBorder withColumnBorders highlightOnHover>
                     <Table.Thead>
                         <Table.Tr>
-                            <Table.Th style={{ width: 300, position: 'sticky', top: 0, zIndex: 10, backgroundColor: '#f9f9f9' }}>
+                            <Table.Th style={{ width: 450, position: 'sticky', top: 0, zIndex: 10, backgroundColor: '#f9f9f9' }}>
                                 <Group gap={0} wrap="nowrap" align="center">
+                                    <Box style={{ flex: 1, minWidth: 0 }}>
+                                        <FilterHeader
+                                            label="MD CAT"
+                                            values={uniqueValues.mds}
+                                            selected={selectedFilters[KEY_MD] || new Set()}
+                                            onChange={(s) => handleFilterChange(KEY_MD, s)}
+                                        />
+                                    </Box>
+                                    <IconChevronRight size={12} style={{ opacity: 0.5, margin: '0 2px', flexShrink: 0 }} />
+
                                     <Box style={{ flex: 1, minWidth: 0 }}>
                                         <FilterHeader
                                             label="중분류"
@@ -444,7 +472,7 @@ export default function CompetitorPivot({ schedules }: Props) {
                                 </Group>
                             </Table.Th>
                             {columns.map(col => (
-                                <Table.Th key={col} style={{ textAlign: 'center', minWidth: 100, position: 'sticky', top: 0, zIndex: 10, backgroundColor: '#f9f9f9' }}>
+                                <Table.Th key={col} style={{ textAlign: 'center', minWidth: 70, position: 'sticky', top: 0, zIndex: 10, backgroundColor: '#f9f9f9' }}>
                                     <Text size="sm">{col}</Text>
                                 </Table.Th>
                             ))}
@@ -470,7 +498,7 @@ export default function CompetitorPivot({ schedules }: Props) {
                             </Table.Td>
                             {columns.map(col => {
                                 const total = filteredData
-                                    .filter(r => (r.other_broad_name || '(없음)') === col)
+                                    .filter(r => (r.other_broad_name || '(미매핑)') === col)
                                     .reduce((acc, r) => acc + ((r.weights_time || 0) / 60), 0);
                                 return (
                                     <Table.Td key={col} style={{ textAlign: 'right', fontWeight: 700 }}>
@@ -482,7 +510,7 @@ export default function CompetitorPivot({ schedules }: Props) {
                                 {(() => {
                                     const colSet = new Set(columns);
                                     const total = filteredData
-                                        .filter(r => colSet.has(r.other_broad_name || '(없음)'))
+                                        .filter(r => colSet.has(r.other_broad_name || '(미매핑)'))
                                         .reduce((acc, r) => acc + ((r.weights_time || 0) / 60), 0);
                                     return total === 0 ? '-' : total.toFixed(2);
                                 })()}
