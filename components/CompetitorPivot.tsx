@@ -382,10 +382,10 @@ export default function CompetitorPivot({ schedules }: Props) {
                                         {isExpanded ? <IconChevronDown size={14} /> : <IconChevronRight size={14} />}
                                     </UnstyledButton>
                                 )}
-                                {badge && <Box style={{ display: 'flex' }}>{badge}</Box>}
                                 <Text size="sm" fw={level === 0 ? 700 : (level === 1 ? 500 : 400)}>
                                     {node.name}
                                 </Text>
+                                {badge && <Box style={{ display: 'flex' }}>{badge}</Box>}
                             </Group>
                         </Table.Td>
                         {columns.map(col => {

@@ -63,17 +63,9 @@ const parseTime = (timeStr: string | undefined | null): number => {
 
 // Helper: Format Sales Amount (10k unit)
 const formatSalesAmount = (amount: number | undefined | null) => {
-    if (amount === undefined || amount === null) return '';
-    const unitVal = Math.floor(amount / 10000);
-    if (unitVal === 0) return '';
-
-    if (unitVal >= 10000) {
-        const eok = Math.floor(unitVal / 10000);
-        const man = unitVal % 10000;
-        if (man === 0) return `${eok}억원`;
-        return `${eok}억${man.toLocaleString()}만원`;
-    }
-    return `${unitVal.toLocaleString()}만원`;
+    if (!amount) return '';
+    const val = amount / 1000000;
+    return val.toLocaleString(undefined, { maximumFractionDigits: 2 });
 };
 
 // ... (Sub Components ScheduleCard etc omitted, keep existing) ...
@@ -481,7 +473,7 @@ export default function ScheduleDashboard({ schedules, availableDates, currentDa
                                 </Box>
                                 {!isShinsegae && (selectedItem.sales_amt || 0) > 0 && (
                                     <Box>
-                                        <Text c="dimmed" size="xs">매출</Text>
+                                        <Text c="dimmed" size="xs">매출(백만원)</Text>
                                         <Text fw={700} size="lg" c="blue">{formatSalesAmount(selectedItem.sales_amt)}</Text>
                                     </Box>
                                 )}
