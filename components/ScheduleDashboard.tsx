@@ -28,7 +28,9 @@ import { useRouter } from 'next/navigation';
 import { useDisclosure } from '@mantine/hooks';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ko';
+
 import CompetitorPivot from './CompetitorPivot';
+import CompetitorRatioTab from './CompetitorRatioTab';
 
 // Set locale
 dayjs.locale('ko');
@@ -79,7 +81,7 @@ export default function ScheduleDashboard({ schedules, availableDates, currentDa
     const router = useRouter();
     const [selectedItemState, setSelectedItemState] = useState<{ item: ScheduleRow, isShinsegae: boolean } | null>(null);
     const [modalOpened, { open: openModal, close: closeModal }] = useDisclosure(false);
-    const [activeTab, setActiveTab] = useState<string | null>('weekly');
+    const [activeTab, setActiveTab] = useState<string | null>('ratio');
     const [aiModalOpen, setAiModalOpen] = useState(false);
     const [weeklySubTab, setWeeklySubTab] = useState<'duplicate' | 'all'>('duplicate');
 
@@ -230,6 +232,9 @@ export default function ScheduleDashboard({ schedules, availableDates, currentDa
                         }}
                     >
                         <Tabs.List>
+                            <Tabs.Tab value="ratio" color="blue">
+                                타사 편성 비중
+                            </Tabs.Tab>
                             <Tabs.Tab value="weekly" color="blue">
                                 주간 편성 상세
                             </Tabs.Tab>
@@ -280,7 +285,8 @@ export default function ScheduleDashboard({ schedules, availableDates, currentDa
                                     styles={{ input: { textAlign: 'center' } }}
                                     size="sm"
                                 />
-                            ) : (
+
+                            ) : activeTab === 'weekly' ? (
                                 <>
                                     <ThemeIcon variant="default" onClick={() => moveWeek('prev')} style={{ cursor: 'pointer' }}><IconChevronLeft size={16} /></ThemeIcon>
                                     <DatePickerInput
@@ -296,13 +302,18 @@ export default function ScheduleDashboard({ schedules, availableDates, currentDa
                                     />
                                     <ThemeIcon variant="default" onClick={() => moveWeek('next')} style={{ cursor: 'pointer' }}><IconChevronRight size={16} /></ThemeIcon>
                                 </>
-                            )}
+                            ) : null}
                         </Group>
                     </Box>
                 </div>
             </AppShell.Header>
 
             <AppShell.Main>
+                {/* 0. Competitor Ratio Tab Content */}
+                <Box style={{ display: activeTab === 'ratio' ? 'block' : 'none', height: 'calc(100vh - 110px)', overflow: 'hidden' }}>
+                    <CompetitorRatioTab />
+                </Box>
+
                 {/* 1. Competitor Schedule Analysis Tab Content */}
                 <Box style={{ display: activeTab === 'competitor' ? 'flex' : 'none', flexDirection: 'column', height: 'calc(100vh - 110px)', padding: '10px 20px 20px 20px' }}>
                     <CompetitorPivot schedules={schedules} />
