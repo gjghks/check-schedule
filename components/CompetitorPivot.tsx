@@ -234,6 +234,33 @@ export default function CompetitorPivot({ schedules }: Props) {
         });
     }, [schedules, selectedFilters]);
 
+    // 3.5 Deduplicate Data for Calculation
+    // Only applied for Competitor rows (where other_broad_name exists)
+    // Key: bd_date + other_broad_name + other_btime
+    const uniqueFilteredData = useMemo(() => {
+        const uniqueMap = new Map<string, ScheduleRow>();
+        const result: ScheduleRow[] = [];
+
+        filteredData.forEach(row => {
+            // If it's Shinsegae (no other_broad_name), we usually treat it as unique or handle differently?
+            // But CompetitorPivot is mainly for Competitor analysis.
+            // If other_broad_name is missing, we just pass it through (or key it?)
+            // Shinsegae rows have 'bd_date' and 'bd_btime'.
+
+            if (!row.other_broad_name) {
+                // Shinsegae row? Use id to be safe, or just pass
+                result.push(row);
+            } else {
+                const key = `${row.bd_date}_${row.other_broad_name}_${row.other_btime}`;
+                if (!uniqueMap.has(key)) {
+                    uniqueMap.set(key, row);
+                    result.push(row);
+                }
+            }
+        });
+        return result;
+    }, [filteredData]);
+
     // 4. Pivot Logic
     // Tree: Mid -> Small -> Brand
     // Value: Sum(weights_time / 60) per Broadcaster
@@ -247,7 +274,7 @@ export default function CompetitorPivot({ schedules }: Props) {
     const tree = useMemo(() => {
         const root = new Map<string, TreeItem>(); // Key: MD CAT
 
-        filteredData.forEach(row => {
+        uniqueFilteredData.forEach(row => {
             const md = row.other_md_name_1 || '(미매핑)';
             const mid = row.other_mgroupn_name || '(미매핑)';
             const small = row.other_sgroupn_name || '(미매핑)';
@@ -285,7 +312,7 @@ export default function CompetitorPivot({ schedules }: Props) {
         });
 
         return root;
-    }, [filteredData]);
+    }, [uniqueFilteredData]);
 
     // 5. Sorted Columns (Only visible broadcasters based on selection OR data?)
     const columns = useMemo(() => {
@@ -497,7 +524,7 @@ export default function CompetitorPivot({ schedules }: Props) {
                                 방송사별 가중시 합계
                             </Table.Td>
                             {columns.map(col => {
-                                const total = filteredData
+                                const total = uniqueFilteredData
                                     .filter(r => (r.other_broad_name || '(미매핑)') === col)
                                     .reduce((acc, r) => acc + ((r.weights_time || 0) / 60), 0);
                                 return (
@@ -509,7 +536,7 @@ export default function CompetitorPivot({ schedules }: Props) {
                             <Table.Td style={{ textAlign: 'right', fontWeight: 800 }}>
                                 {(() => {
                                     const colSet = new Set(columns);
-                                    const total = filteredData
+                                    const total = uniqueFilteredData
                                         .filter(r => colSet.has(r.other_broad_name || '(미매핑)'))
                                         .reduce((acc, r) => acc + ((r.weights_time || 0) / 60), 0);
                                     return total === 0 ? '-' : total.toFixed(2);

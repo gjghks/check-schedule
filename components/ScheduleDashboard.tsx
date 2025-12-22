@@ -79,7 +79,7 @@ export default function ScheduleDashboard({ schedules, availableDates, currentDa
     const router = useRouter();
     const [selectedItemState, setSelectedItemState] = useState<{ item: ScheduleRow, isShinsegae: boolean } | null>(null);
     const [modalOpened, { open: openModal, close: closeModal }] = useDisclosure(false);
-    const [activeTab, setActiveTab] = useState<string | null>('competitor');
+    const [activeTab, setActiveTab] = useState<string | null>('weekly');
     const [aiModalOpen, setAiModalOpen] = useState(false);
     const [weeklySubTab, setWeeklySubTab] = useState<'duplicate' | 'all'>('duplicate');
 
@@ -230,11 +230,11 @@ export default function ScheduleDashboard({ schedules, availableDates, currentDa
                         }}
                     >
                         <Tabs.List>
-                            <Tabs.Tab value="competitor" color="blue">
-                                경쟁사 편성 분석
-                            </Tabs.Tab>
                             <Tabs.Tab value="weekly" color="blue">
                                 주간 편성 상세
+                            </Tabs.Tab>
+                            <Tabs.Tab value="competitor" color="blue">
+                                경쟁사 편성 분석
                             </Tabs.Tab>
                         </Tabs.List>
                     </Tabs>
