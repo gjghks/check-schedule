@@ -31,7 +31,7 @@ interface Props {
 const KEY_BROADCASTER = 'other_broad_name';
 const KEY_MID = 'other_mgroupn_name';
 const KEY_SMALL = 'other_sgroupn_name';
-const KEY_BRAND = 'other_brand_name';
+const KEY_BRAND = 'company_brand_name';
 const KEY_PRODUCT = 'other_product_name';
 const KEY_MD = 'other_md_name_1';
 
@@ -139,7 +139,7 @@ export default function CompetitorPivot({ schedules }: Props) {
             sets[KEY_BROADCASTER].add(row.other_broad_name || '(미매핑)');
             sets[KEY_MID].add(row.other_mgroupn_name || '(미매핑)');
             sets[KEY_SMALL].add(row.other_sgroupn_name || '(미매핑)');
-            sets[KEY_BRAND].add(row.other_brand_name || '(미매핑)');
+            sets[KEY_BRAND].add(row.company_brand_name || '(미매핑)');
             sets[KEY_PRODUCT].add(row.other_product_name || '(미매핑)');
             sets[KEY_MD].add(row.other_md_name_1 || '(미매핑)');
         });
@@ -185,7 +185,7 @@ export default function CompetitorPivot({ schedules }: Props) {
             schedules.forEach(row => {
                 const mid = row.other_mgroupn_name || '(미매핑)';
                 const small = row.other_sgroupn_name;
-                const brand = row.other_brand_name;
+                const brand = row.company_brand_name;
                 if (small && brand) {
                     validMids.add(mid);
                 }
@@ -218,7 +218,7 @@ export default function CompetitorPivot({ schedules }: Props) {
             const b = row.other_broad_name || '(미매핑)';
             const m = row.other_mgroupn_name || '(미매핑)';
             const s = row.other_sgroupn_name || '(미매핑)';
-            const br = row.other_brand_name || '(미매핑)';
+            const br = row.company_brand_name || '(미매핑)';
             const p = row.other_product_name || '(미매핑)';
             const md = row.other_md_name_1 || '(미매핑)';
 
@@ -251,7 +251,7 @@ export default function CompetitorPivot({ schedules }: Props) {
             const md = row.other_md_name_1 || '(미매핑)';
             const mid = row.other_mgroupn_name || '(미매핑)';
             const small = row.other_sgroupn_name || '(미매핑)';
-            const brand = row.other_brand_name || '(미매핑)';
+            const brand = row.company_brand_name || '(미매핑)';
             const broadcaster = row.other_broad_name || '(미매핑)';
             const weight = (row.weights_time || 0) / 60; // Minutes to Hours
 

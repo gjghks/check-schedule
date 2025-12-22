@@ -66,6 +66,7 @@ export interface ScheduleRow {
     sales_amt?: number;
     create_dtm?: string;
     create_name?: string;
+    company_brand_name?: string;
 }
 
 export async function getSchedulesByDate(dateStr: string): Promise<ScheduleRow[]> {
