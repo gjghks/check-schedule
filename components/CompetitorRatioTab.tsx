@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Table, ScrollArea, Box, Text, Group, LoadingOverlay, Card, Badge, ThemeIcon, Alert } from '@mantine/core';
-import { IconArrowUp, IconArrowDown, IconCalendar } from '@tabler/icons-react';
+import { IconArrowUp, IconArrowDown, IconCalendar, IconChevronRight, IconChevronDown } from '@tabler/icons-react';
 
 
 interface RatioData {
@@ -29,6 +29,137 @@ export default function CompetitorRatioTab() {
             });
     }, []);
 
+    // Hierarchy Processing
+    const processedMap = useMemo(() => {
+        if (!data || !data.data) return [];
+
+        const rows: any[] = [];
+        // Stack to track current parents: [Level 0 Parent ID, Level 1 Parent ID, ...]
+        const parentStack: number[] = [];
+
+        // Filter empty rows first
+        const validData = data.data.filter(r => r[0]);
+
+        validData.forEach((row, index) => {
+            // Heuristic for Level:
+            // Level 0: "상품N담당(소계)", "합계", "MD CAT 미매핑(소계)" -> No "└─"
+            // Level 1: "   └─ Team(소계)" -> Contains "└─" AND "(소계)"
+            // Level 2: "        └─ Category" -> Contains "└─" AND NO "(소계)"? 
+            // Be careful with "MD CAT 미매핑" -> "└─ 미매핑(소계)". This is Level 0 -> Level 1.
+            // Actually, let's use the raw string inspection.
+
+            const rawName = String(row[1] || '');
+            const nameClean = rawName.replace(/ㄴ/g, '').replace(/_/g, '').trim().replace(/^└─\s*/, '');
+
+            let level = 0;
+            if (rawName.includes('└─')) {
+                // Check indentation roughly by length difference or strict unicode check
+                // In the data log: 
+                // Level 1: 3 NBSP + └─ (Char index ~3)
+                // Level 2: 8 NBSP + └─ (Char index ~8)
+                // Let's assume simpler: 
+                // If it has "(소계)" and "└─", it's likely Level 1 (Team).
+                // If it has "└─" but NO "(소계)", it's likely Level 2 (Category).
+                // EXCEPT "미매핑(소계)" under "MD CAT". 
+
+                // Better heuristic using known prefixes from previous steps if possible, 
+                // but dynamic is better.
+
+                // Let's count approximate leading spaces if possible, but row[1] might be cleaned.
+                // The 'paddingLeft' logic previously used:
+                // startsWith('ㄴ') ? 20 : (startsWith('__') ? 30 : 10)
+                // Inspect the raw strings from previous JSON logs:
+                // "   └─ " vs "        └─ "
+
+                // Let's try:
+                if (rawName.match(/^\s{5,}/) || rawName.includes('        └─')) {
+                    level = 2;
+                } else {
+                    level = 1;
+                }
+
+                // Fallback for "미매핑(소계)" which acts as child of Level 0 but might look like Level 1.
+                // If parentStack has only Level 0, and this is Level 1, good.
+            } else {
+                level = 0;
+            }
+
+            // Setup ID
+            const id = index;
+
+            // Update Stack
+            // If current level is X, we need parent at X-1.
+            // Ensure stack is correct size.
+            // If we find Level 0, clear stack.
+            // If Level 1, keep Level 0 in stack, remove Level 1+ if any.
+
+            if (level === 0) {
+                parentStack.length = 0; // Reset
+                parentStack[0] = id;
+            } else if (level === 1) {
+                parentStack.length = 1; // Keep Level 0
+                parentStack[1] = id;
+            } else {
+                // Level 2
+                parentStack.length = 2; // Keep Level 0, 1
+                // We don't push Level 2 to stack as it has no children in this dataset usually
+            }
+
+            const parentId = level > 0 ? parentStack[level - 1] : null;
+
+            rows.push({
+                ...row,
+                id,
+                level,
+                parentId,
+                nameDisplay: nameClean,
+                hasChildren: false // Will update later
+            });
+        });
+
+        // Second pass to set hasChildren
+        const idMap = new Map(rows.map(r => [r.id, r]));
+        rows.forEach(r => {
+            if (r.parentId !== null) {
+                const p = idMap.get(r.parentId);
+                if (p) p.hasChildren = true;
+            }
+        });
+
+        return rows;
+    }, [data]);
+
+    // Expanded State
+    const [expanded, setExpanded] = useState<Set<number>>(new Set());
+
+    // Default collapsed: we simply do not automatically add IDs to expanded set.
+
+    const toggleExpand = (id: number) => {
+        const newSet = new Set(expanded);
+        if (newSet.has(id)) {
+            newSet.delete(id);
+        } else {
+            newSet.add(id);
+        }
+        setExpanded(newSet);
+    };
+
+    // Filter Visible
+    const visibleRows = processedMap.filter(r => {
+        if (r.parentId === null) return true; // Always show roots
+        // Show if Parent is Expanded.
+        // What if Grandparent is collapsed? We need to check recursive or just parent?
+        // Usually recursive check.
+        // Check lineage.
+        let curr = r;
+        while (curr.parentId !== null) {
+            if (!expanded.has(curr.parentId)) return false;
+            curr = processedMap.find((x: any) => x.id === curr.parentId);
+            // Optimization: Map access would be faster but array find is OK for small text
+            if (!curr) break;
+        }
+        return true;
+    });
 
     if (loading) {
         return <Box h={300} pos="relative"><LoadingOverlay visible={true} /></Box>;
@@ -37,9 +168,6 @@ export default function CompetitorRatioTab() {
     if (!data) return <Text>데이터를 불러올 수 없습니다.</Text>;
     if (data.error) return <Alert color="red" title="오류">{data.error}</Alert>;
     if (!data.data || !Array.isArray(data.data)) return <Text>데이터 형식이 올바르지 않습니다.</Text>;
-
-    // Info parsing: "편성일자 : 2025/12/01 ~ 2025/12/27 ,  방송사: 전체"
-    // Let's display this nicely.
 
     const renderArrowValue = (val: string) => {
         if (!val) return '';
@@ -71,7 +199,14 @@ export default function CompetitorRatioTab() {
     };
 
     const getRowBgColor = (rowData: any[]) => {
-        // Check "구분" column (index 1)
+        // Check "구분" column (index 1) which is now row.original[1] or just row[1] if row is the array.
+        // Wait, visibleRows contains processed objects with ...row props.
+        // The original row array is spread into the object. 
+        // So row[1] might work if array props are preserved or we need to use row.original?
+        // In the spread: { ...row, ... } where row is the array. 
+        // Array spread into object adds index keys: "0": val, "1": val...
+        // So row[1] works.
+
         const category = String(rowData[1] || '');
         if (category.includes('상품1담당(소계)')) return '#e6fcf5'; // Greenish
         if (category.includes('상품2담당(소계)')) return '#fff9db'; // Yellowish
@@ -104,7 +239,7 @@ export default function CompetitorRatioTab() {
                         <Table.Thead>
                             <Table.Tr bg="#343a40">
                                 <Table.Th c="white" ta="center" w={50} bg="#495057">No</Table.Th>
-                                <Table.Th c="white" ta="center" w={180} bg="#495057">구분</Table.Th>
+                                <Table.Th c="white" ta="center" w={220} bg="#495057">구분</Table.Th>
                                 <Table.Th colSpan={3} c="white" ta="center" bg="#495057">당사</Table.Th>
                                 <Table.Th colSpan={3} c="white" ta="center" bg="#495057">현대</Table.Th>
                                 <Table.Th colSpan={3} c="white" ta="center" bg="#495057">GS</Table.Th>
@@ -113,21 +248,32 @@ export default function CompetitorRatioTab() {
                             </Table.Tr>
                         </Table.Thead>
                         <Table.Tbody>
-                            {data.data.filter(row => row[0]).map((row, rowIndex) => (
-                                <Table.Tr key={rowIndex} bg={getRowBgColor(row)} fw={getRowFw(row)}>
+                            {visibleRows.map((row: any) => (
+                                <Table.Tr key={row.id} bg={getRowBgColor(row)} fw={getRowFw(row)}>
                                     <Table.Td ta="center">{row[0]}</Table.Td>
-                                    <Table.Td style={{ paddingLeft: row[1].startsWith('ㄴ') ? 20 : (row[1].startsWith('__') ? 30 : 10) }}>
-                                        {String(row[1]).replace(/ㄴ/g, '').replace(/_/g, '')}
+                                    <Table.Td
+                                        style={{ paddingLeft: 10 + (row.level * 20), cursor: row.hasChildren ? 'pointer' : 'default' }}
+                                        onClick={() => row.hasChildren && toggleExpand(row.id)}
+                                    >
+                                        <Group gap={4} wrap="nowrap">
+                                            {row.hasChildren && (
+                                                expanded.has(row.id) ? <IconChevronDown size={14} /> : <IconChevronRight size={14} />
+                                            )}
+                                            {!row.hasChildren && <Box w={12} />}
+                                            <Text size="sm">{row.nameDisplay}</Text>
+                                        </Group>
                                     </Table.Td>
                                     {/* Data Columns */}
-                                    {row.slice(2, 17).map((cell: any, cellIndex: number) => {
-                                        // Check if column is "전월비" (indices: 4, 7, 10, 13, 16 -- in the slice (2..16) they are 2, 5, 8, 11, 14 relative to 0)
-                                        // relative cellIndex 0 -> row[2] (전월)
-                                        // relative cellIndex 2 -> row[4] (전월비)
-                                        // 2, 5, 8, 11, 14
-                                        const isDiffCol = [2, 5, 8, 11, 14].includes(cellIndex);
+                                    {/* Data Columns: indices 2 to 16 */}
+                                    {Array.from({ length: 15 }).map((_, i) => {
+                                        const originalIndex = i + 2;
+                                        const cell = row[originalIndex];
+                                        // relative index i corresponds to previous logic's cellIndex 
+                                        // (0 -> 2, etc. so diff logic [2,5,8,11,14] remains same for i)
+                                        const isDiffCol = [2, 5, 8, 11, 14].includes(i);
+
                                         return (
-                                            <Table.Td key={cellIndex} ta="center">
+                                            <Table.Td key={i} ta="center">
                                                 {isDiffCol ? renderArrowValue(cell) : cell}
                                             </Table.Td>
                                         );
