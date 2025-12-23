@@ -238,13 +238,35 @@ export default function CompetitorRatioTab() {
                     <Table withTableBorder withColumnBorders stickyHeader highlightOnHover verticalSpacing="xs">
                         <Table.Thead>
                             <Table.Tr bg="#343a40">
-                                <Table.Th c="white" ta="center" w={50} bg="#495057">No</Table.Th>
-                                <Table.Th c="white" ta="center" w={220} bg="#495057">구분</Table.Th>
+                                <Table.Th rowSpan={2} c="white" ta="center" w={50} bg="#495057">No</Table.Th>
+                                <Table.Th rowSpan={2} c="white" ta="center" w={220} bg="#495057">구분</Table.Th>
                                 <Table.Th colSpan={3} c="white" ta="center" bg="#495057">당사</Table.Th>
                                 <Table.Th colSpan={3} c="white" ta="center" bg="#495057">현대</Table.Th>
                                 <Table.Th colSpan={3} c="white" ta="center" bg="#495057">GS</Table.Th>
                                 <Table.Th colSpan={3} c="white" ta="center" bg="#495057">롯데</Table.Th>
                                 <Table.Th colSpan={3} c="white" ta="center" bg="#495057">CJ</Table.Th>
+                            </Table.Tr>
+                            <Table.Tr bg="#343a40">
+                                {/* 당사 */}
+                                <Table.Th c="white" ta="center" w={70} bg="#495057" style={{ borderTop: '1px solid #707070' }}>전월</Table.Th>
+                                <Table.Th c="white" ta="center" w={70} bg="#495057" style={{ borderTop: '1px solid #707070' }}>당월</Table.Th>
+                                <Table.Th c="white" ta="center" w={70} bg="#495057" style={{ borderTop: '1px solid #707070' }}>전월비</Table.Th>
+                                {/* 현대 */}
+                                <Table.Th c="white" ta="center" w={70} bg="#495057" style={{ borderTop: '1px solid #707070' }}>전월</Table.Th>
+                                <Table.Th c="white" ta="center" w={70} bg="#495057" style={{ borderTop: '1px solid #707070' }}>당월</Table.Th>
+                                <Table.Th c="white" ta="center" w={70} bg="#495057" style={{ borderTop: '1px solid #707070' }}>전월비</Table.Th>
+                                {/* GS */}
+                                <Table.Th c="white" ta="center" w={70} bg="#495057" style={{ borderTop: '1px solid #707070' }}>전월</Table.Th>
+                                <Table.Th c="white" ta="center" w={70} bg="#495057" style={{ borderTop: '1px solid #707070' }}>당월</Table.Th>
+                                <Table.Th c="white" ta="center" w={70} bg="#495057" style={{ borderTop: '1px solid #707070' }}>전월비</Table.Th>
+                                {/* 롯데 */}
+                                <Table.Th c="white" ta="center" w={70} bg="#495057" style={{ borderTop: '1px solid #707070' }}>전월</Table.Th>
+                                <Table.Th c="white" ta="center" w={70} bg="#495057" style={{ borderTop: '1px solid #707070' }}>당월</Table.Th>
+                                <Table.Th c="white" ta="center" w={70} bg="#495057" style={{ borderTop: '1px solid #707070' }}>전월비</Table.Th>
+                                {/* CJ */}
+                                <Table.Th c="white" ta="center" w={70} bg="#495057" style={{ borderTop: '1px solid #707070' }}>전월</Table.Th>
+                                <Table.Th c="white" ta="center" w={70} bg="#495057" style={{ borderTop: '1px solid #707070' }}>당월</Table.Th>
+                                <Table.Th c="white" ta="center" w={70} bg="#495057" style={{ borderTop: '1px solid #707070' }}>전월비</Table.Th>
                             </Table.Tr>
                         </Table.Thead>
                         <Table.Tbody>
