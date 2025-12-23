@@ -476,15 +476,32 @@ export default function CompetitorRatioTab() {
                                         <XAxis dataKey="name" tick={{ fontSize: 12 }} />
                                         <YAxis tick={{ fontSize: 12 }} />
                                         <RechartsTooltip content={<CustomTooltip />} />
-                                        <Legend wrapperStyle={{ fontSize: '11px' }} />
+                                        <Legend
+                                            payload={[
+                                                { value: '당사', type: 'rect', color: '#333333' },
+                                                { value: '현대', type: 'rect', color: '#119586' },
+                                                { value: 'GS', type: 'rect', color: '#6CC218' },
+                                                { value: '롯데', type: 'rect', color: '#EE3124' },
+                                                { value: 'CJ', type: 'rect', color: '#6A00A6' }
+                                            ]}
+                                            wrapperStyle={{ fontSize: '11px' }}
+                                        />
                                         <Bar dataKey="shinsegae" name="당사" fill="#333333" />
-                                        <Bar dataKey="lotte" name="롯데" fill="#EE3124" />
-                                        <Bar dataKey="cj" name="CJ" fill="#6A00A6" />
                                         <Bar dataKey="hyundai" name="현대" fill="#119586" />
                                         <Bar dataKey="gs" name="GS" fill="#6CC218" />
+                                        <Bar dataKey="lotte" name="롯데" fill="#EE3124" />
+                                        <Bar dataKey="cj" name="CJ" fill="#6A00A6" />
                                     </BarChart>
                                 </ResponsiveContainer>
                             </Box>
+                            <Stack gap={2} mt="xs">
+                                <Text size="xs"><b>주방:</b> 현대(6.2%) {'>'} GS(5.0%) {'>'} 롯데(3.4%) {'>'} CJ(3.2%) {'>'} 당사(1.0%)</Text>
+                                <Text size="xs" c="dimmed" pl="sm" mb={4}>주요 아이템: 키친아트(현대), 해피콜(GS).</Text>
+                                <Text size="xs"><b>가전:</b> 롯데(2.9%) {'>'} GS(2.4%) {'>'} 현대(1.9%) {'>'} CJ(1.5%) {'>'} 당사(0.0%)</Text>
+                                <Text size="xs" c="dimmed" pl="sm" mb={4}>주요 아이템: 삼성전자(롯데), LG전자(GS).</Text>
+                                <Text size="xs"><b>리빙:</b> GS(8.5%) {'>'} 롯데(7.5%) {'>'} CJ(7.1%) {'>'} 당사(5.4%) {'>'} 현대(4.8%)</Text>
+                                <Text size="xs" c="dimmed" pl="sm">주요 아이템: 씰리침대(GS), 에싸소파(롯데).</Text>
+                            </Stack>
                         </Box>
 
                         {/* 3-2 Food/Health */}
@@ -504,15 +521,30 @@ export default function CompetitorRatioTab() {
                                         <XAxis dataKey="name" tick={{ fontSize: 12 }} />
                                         <YAxis tick={{ fontSize: 12 }} />
                                         <RechartsTooltip content={<CustomTooltip />} />
-                                        <Legend wrapperStyle={{ fontSize: '11px' }} />
+                                        <Legend
+                                            payload={[
+                                                { value: '당사', type: 'rect', color: '#333333' },
+                                                { value: '현대', type: 'rect', color: '#119586' },
+                                                { value: 'GS', type: 'rect', color: '#6CC218' },
+                                                { value: '롯데', type: 'rect', color: '#EE3124' },
+                                                { value: 'CJ', type: 'rect', color: '#6A00A6' }
+                                            ]}
+                                            wrapperStyle={{ fontSize: '11px' }}
+                                        />
                                         <Bar dataKey="shinsegae" name="당사" fill="#333333" />
-                                        <Bar dataKey="lotte" name="롯데" fill="#EE3124" />
-                                        <Bar dataKey="cj" name="CJ" fill="#6A00A6" />
                                         <Bar dataKey="hyundai" name="현대" fill="#119586" />
                                         <Bar dataKey="gs" name="GS" fill="#6CC218" />
+                                        <Bar dataKey="lotte" name="롯데" fill="#EE3124" />
+                                        <Bar dataKey="cj" name="CJ" fill="#6A00A6" />
                                     </BarChart>
                                 </ResponsiveContainer>
                             </Box>
+                            <Stack gap={2} mt="xs">
+                                <Text size="xs"><b>푸드:</b> 롯데(5.8%) {'>'} GS(4.0%) {'>'} 현대(3.9%) {'>'} 당사(3.1%) {'>'} CJ(2.0%)</Text>
+                                <Text size="xs" c="dimmed" pl="sm" mb={4}>주요 아이템: 김나운더키친(롯데), 산지애사과(GS).</Text>
+                                <Text size="xs"><b>건강식품:</b> CJ(21.3%) {'>'} GS(20.9%) {'>'} 당사(14.7%) {'>'} 롯데(14.3%) {'>'} 현대(12.7%)</Text>
+                                <Text size="xs" c="dimmed" pl="sm">주요 아이템: 종근당건강(CJ), 정관장(GS), 여에스더(현대).</Text>
+                            </Stack>
                         </Box>
 
                         {/* 3-3 Travel/Ins/Rental */}
@@ -534,15 +566,34 @@ export default function CompetitorRatioTab() {
                                         <XAxis dataKey="name" tick={{ fontSize: 12 }} />
                                         <YAxis tick={{ fontSize: 12 }} />
                                         <RechartsTooltip content={<CustomTooltip />} />
-                                        <Legend wrapperStyle={{ fontSize: '11px' }} />
+                                        <Legend
+                                            payload={[
+                                                { value: '당사', type: 'rect', color: '#333333' },
+                                                { value: '현대', type: 'rect', color: '#119586' },
+                                                { value: 'GS', type: 'rect', color: '#6CC218' },
+                                                { value: '롯데', type: 'rect', color: '#EE3124' },
+                                                { value: 'CJ', type: 'rect', color: '#6A00A6' }
+                                            ]}
+                                            wrapperStyle={{ fontSize: '11px' }}
+                                        />
                                         <Bar dataKey="shinsegae" name="당사" fill="#333333" />
-                                        <Bar dataKey="lotte" name="롯데" fill="#EE3124" />
-                                        <Bar dataKey="cj" name="CJ" fill="#6A00A6" />
                                         <Bar dataKey="hyundai" name="현대" fill="#119586" />
                                         <Bar dataKey="gs" name="GS" fill="#6CC218" />
+                                        <Bar dataKey="lotte" name="롯데" fill="#EE3124" />
+                                        <Bar dataKey="cj" name="CJ" fill="#6A00A6" />
                                     </BarChart>
                                 </ResponsiveContainer>
                             </Box>
+                            <Stack gap={2} mt="xs">
+                                <Text size="xs"><b>여행:</b> 당사(4.7%) {'>'} 현대(4.0%) {'>'} 롯데(3.5%) {'>'} GS(3.1%) {'>'} CJ(2.9%)</Text>
+                                <Text size="xs" c="dimmed" pl="sm" mb={4}>주요 아이템: 롯데관광(당사), 모두투어(현대).</Text>
+                                <Text size="xs"><b>보험:</b> 현대(9.2%) {'>'} GS(5.8%) {'>'} CJ(5.2%) {'>'} 롯데(2.4%) {'>'} 당사(2.2%)</Text>
+                                <Text size="xs" c="dimmed" pl="sm" mb={4}>주요 아이템: DB손해보험(현대), 삼성화재(GS).</Text>
+                                <Text size="xs"><b>일반렌탈:</b> 롯데(4.3%) {'>'} CJ(2.4%) {'>'} 현대(1.8%) {'>'} GS(1.4%) {'>'} 당사(1.1%)</Text>
+                                <Text size="xs" c="dimmed" pl="sm" mb={4}>주요 아이템: 쿠쿠정수기(롯데), 바디프랜드(CJ).</Text>
+                                <Text size="xs"><b>대품렌탈:</b> 당사(1.7%) {'>'} 현대(0.3%) {'>'} GS(0.0%) = 롯데(0.0%) = CJ(0.0%)</Text>
+                                <Text size="xs" c="dimmed" pl="sm">주요 아이템: 대명아임레디(당사).</Text>
+                            </Stack>
                         </Box>
 
                         {/* 3-4 Clothing/Beauty */}
@@ -563,15 +614,32 @@ export default function CompetitorRatioTab() {
                                         <XAxis dataKey="name" tick={{ fontSize: 12 }} />
                                         <YAxis tick={{ fontSize: 12 }} />
                                         <RechartsTooltip content={<CustomTooltip />} />
-                                        <Legend wrapperStyle={{ fontSize: '11px' }} />
+                                        <Legend
+                                            payload={[
+                                                { value: '당사', type: 'rect', color: '#333333' },
+                                                { value: '현대', type: 'rect', color: '#119586' },
+                                                { value: 'GS', type: 'rect', color: '#6CC218' },
+                                                { value: '롯데', type: 'rect', color: '#EE3124' },
+                                                { value: 'CJ', type: 'rect', color: '#6A00A6' }
+                                            ]}
+                                            wrapperStyle={{ fontSize: '11px' }}
+                                        />
                                         <Bar dataKey="shinsegae" name="당사" fill="#333333" />
-                                        <Bar dataKey="lotte" name="롯데" fill="#EE3124" />
-                                        <Bar dataKey="cj" name="CJ" fill="#6A00A6" />
                                         <Bar dataKey="hyundai" name="현대" fill="#119586" />
                                         <Bar dataKey="gs" name="GS" fill="#6CC218" />
+                                        <Bar dataKey="lotte" name="롯데" fill="#EE3124" />
+                                        <Bar dataKey="cj" name="CJ" fill="#6A00A6" />
                                     </BarChart>
                                 </ResponsiveContainer>
                             </Box>
+                            <Stack gap={2} mt="xs">
+                                <Text size="xs"><b>의류:</b> 롯데(20.2%) {'>'} CJ(18.9%) {'>'} 현대(16.2%) {'>'} 당사(13.7%) {'>'} GS(13.4%)</Text>
+                                <Text size="xs" c="dimmed" pl="sm" mb={4}>주요 아이템: LBL(롯데), 더엣지(CJ), 라씨엔토(현대).</Text>
+                                <Text size="xs"><b>잡화:</b> 롯데(10.7%) {'>'} CJ(8.8%) {'>'} 현대(5.7%) {'>'} GS(4.2%) {'>'} 당사(0.6%)</Text>
+                                <Text size="xs" c="dimmed" pl="sm" mb={4}>주요 아이템: 구찌/프라다(롯데), 아메리칸투어리스터(CJ).</Text>
+                                <Text size="xs"><b>뷰티:</b> CJ(21.3%) {'>'} GS(19.7%) {'>'} 롯데(16.7%) {'>'} 현대(14.4%) {'>'} 당사(12.9%)</Text>
+                                <Text size="xs" c="dimmed" pl="sm">주요 아이템: AHC(CJ), 가히(GS), 달바(현대).</Text>
+                            </Stack>
                         </Box>
 
                         {/* 3-5 Leports/Under */}
@@ -592,15 +660,32 @@ export default function CompetitorRatioTab() {
                                         <XAxis dataKey="name" tick={{ fontSize: 12 }} />
                                         <YAxis tick={{ fontSize: 12 }} />
                                         <RechartsTooltip content={<CustomTooltip />} />
-                                        <Legend wrapperStyle={{ fontSize: '11px' }} />
+                                        <Legend
+                                            payload={[
+                                                { value: '당사', type: 'rect', color: '#333333' },
+                                                { value: '현대', type: 'rect', color: '#119586' },
+                                                { value: 'GS', type: 'rect', color: '#6CC218' },
+                                                { value: '롯데', type: 'rect', color: '#EE3124' },
+                                                { value: 'CJ', type: 'rect', color: '#6A00A6' }
+                                            ]}
+                                            wrapperStyle={{ fontSize: '11px' }}
+                                        />
                                         <Bar dataKey="shinsegae" name="당사" fill="#333333" />
-                                        <Bar dataKey="lotte" name="롯데" fill="#EE3124" />
-                                        <Bar dataKey="cj" name="CJ" fill="#6A00A6" />
                                         <Bar dataKey="hyundai" name="현대" fill="#119586" />
                                         <Bar dataKey="gs" name="GS" fill="#6CC218" />
+                                        <Bar dataKey="lotte" name="롯데" fill="#EE3124" />
+                                        <Bar dataKey="cj" name="CJ" fill="#6A00A6" />
                                     </BarChart>
                                 </ResponsiveContainer>
                             </Box>
+                            <Stack gap={2} mt="xs">
+                                <Text size="xs"><b>레포츠:</b> 당사(12.8%) {'>'} 롯데(6.8%) {'>'} 현대(4.9%) {'>'} GS(3.3%) = CJ(3.3%)</Text>
+                                <Text size="xs" c="dimmed" pl="sm" mb={4}>주요 아이템: 내셔널지오그래픽(당사), 캘러웨이(롯데).</Text>
+                                <Text size="xs"><b>언더웨어:</b> 당사(3.9%) {'>'} GS(1.1%) = 롯데(1.1%) {'>'} CJ(0.8%) {'>'} 현대(0.4%)</Text>
+                                <Text size="xs" c="dimmed" pl="sm" mb={4}>주요 아이템: 푸마 바디웨어(당사), 원더브라(GS).</Text>
+                                <Text size="xs"><b>브랜드패션:</b> 당사(7.4%) {'>'} 현대(0.0%) = GS(0.0%) = 롯데(0.0%) = CJ(0.0%)</Text>
+                                <Text size="xs" c="dimmed" pl="sm">특이사항: 당사 단독 편성 카테고리.</Text>
+                            </Stack>
                         </Box>
                     </Box>
                 </Stack>
