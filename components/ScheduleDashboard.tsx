@@ -246,29 +246,29 @@ export default function ScheduleDashboard({ schedules, availableDates, currentDa
 
                     <Box pb={4}>
                         <Group>
+                            {activeTab === 'ratio' && (
+                                <Button
+                                    leftSection={<IconSparkles size={16} />}
+                                    variant="gradient"
+                                    gradient={{ from: 'violet', to: 'cyan', deg: 90 }}
+                                    size="xs"
+                                    mr="xs"
+                                    onClick={() => setAiModalOpen(true)}
+                                >
+                                    생성형 AI 분석
+                                </Button>
+                            )}
                             {activeTab === 'weekly' && (
-                                <>
-                                    <Button
-                                        leftSection={<IconSparkles size={16} />}
-                                        variant="gradient"
-                                        gradient={{ from: 'violet', to: 'cyan', deg: 90 }}
-                                        size="xs"
-                                        mr="xs"
-                                        onClick={() => setAiModalOpen(true)}
-                                    >
-                                        생성형 AI 분석
-                                    </Button>
-                                    <SegmentedControl
-                                        value={weeklySubTab}
-                                        onChange={(v) => setWeeklySubTab(v as any)}
-                                        data={[
-                                            { label: '중복', value: 'duplicate' },
-                                            { label: '상세', value: 'all' },
-                                        ]}
-                                        size="xs"
-                                        mr="xs"
-                                    />
-                                </>
+                                <SegmentedControl
+                                    value={weeklySubTab}
+                                    onChange={(v) => setWeeklySubTab(v as any)}
+                                    data={[
+                                        { label: '중복', value: 'duplicate' },
+                                        { label: '상세', value: 'all' },
+                                    ]}
+                                    size="xs"
+                                    mr="xs"
+                                />
                             )}
                             <Button variant="default" size="sm" onClick={handleTodayClick}>오늘</Button>
                             {activeTab === 'competitor' ? (
