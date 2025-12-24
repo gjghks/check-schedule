@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { ScheduleRow } from '@/lib/db';
 import {
     Table,
@@ -178,8 +178,9 @@ export default function CompetitorPivot({ schedules }: Props) {
     const [selectedFilters, setSelectedFilters] = useState<{ [key: string]: Set<string> }>({});
 
     // Initialize state if empty
-    useMemo(() => {
-        if (Object.keys(selectedFilters).length === 0 && schedules.length > 0) {
+    // Initialize or Update state when data changes
+    useEffect(() => {
+        if (schedules.length > 0) {
             // Filter Mids: Only those with valid Small AND Brand
             const validMids = new Set<string>();
             schedules.forEach(row => {
@@ -191,19 +192,22 @@ export default function CompetitorPivot({ schedules }: Props) {
                 }
             });
 
-            // Note: If validMids is empty (weird?), maybe fallback to all? 
-            // The requirement implies filtering. If none, none checked.
+            // Fallback: if no valid mids, select all (or maybe user wants to see partial?)
+            // If validMids has items, use it. Else use all uniqueValues.mids
+            const midsToSelect = validMids.size > 0 ? validMids : new Set(uniqueValues.mids);
 
             setSelectedFilters({
                 [KEY_BROADCASTER]: new Set(uniqueValues.broadcasters),
-                [KEY_MID]: validMids,
+                [KEY_MID]: midsToSelect,
                 [KEY_SMALL]: new Set(uniqueValues.smalls),
                 [KEY_BRAND]: new Set(uniqueValues.brands),
                 [KEY_PRODUCT]: new Set(uniqueValues.products),
                 [KEY_MD]: new Set(uniqueValues.mds),
             });
+        } else {
+            setSelectedFilters({});
         }
-    }, [uniqueValues, schedules]); // Wait for uniqueValues
+    }, [uniqueValues, schedules]);
 
     // Handle Change
     const handleFilterChange = (key: string, set: Set<string>) => {
