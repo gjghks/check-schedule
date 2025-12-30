@@ -6,7 +6,7 @@ import fs from 'fs';
 export async function GET() {
     try {
         console.log('Current working directory:', process.cwd());
-        const filePath = path.join(process.cwd(), 'data', '251222_competitor_ratio.xlsx');
+        const filePath = path.join(process.cwd(), 'data', '251230_competitor_ratio.xlsx');
         console.log('Attempting to read file at:', filePath);
 
         // Use fs to read the file buffer directly
