@@ -7,13 +7,13 @@ import glob
 def automate_merge(date_prefix):
     # Define file patterns
     # Expected files:
-    # 1. {date}_ai_sche_comp_sml_rslt.xlsx
+    # 1. {date}_tb_ai_sche_comp_sml_rslt.xlsx
     # 2. {date}_od_bo_tcompanybroadsche.xlsx
     # 3. {date}_od_bo_tcompanybroadsche_liveecomm.xlsx
     
     base_dir = './data'
     
-    file_ai = os.path.join(base_dir, f"{date_prefix}_ai_sche_comp_sml_rslt.xlsx")
+    file_ai = os.path.join(base_dir, f"{date_prefix}_tb_ai_sche_comp_sml_rslt.xlsx")
     file_broad = os.path.join(base_dir, f"{date_prefix}_od_bo_tcompanybroadsche.xlsx")
     file_ecomm = os.path.join(base_dir, f"{date_prefix}_od_bo_tcompanybroadsche_liveecomm.xlsx")
     
