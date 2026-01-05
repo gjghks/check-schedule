@@ -2,7 +2,7 @@ const XLSX = require('xlsx');
 const fs = require('fs');
 
 try {
-    const buf = fs.readFileSync('data/251230_competitor_ratio.xlsx');
+    const buf = fs.readFileSync('data/251231_competitor_ratio.xlsx');
     const wb = XLSX.read(buf, { type: 'buffer' });
     const sheetName = wb.SheetNames[0];
     const sheet = wb.Sheets[sheetName];

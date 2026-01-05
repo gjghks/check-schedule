@@ -247,7 +247,7 @@ export default function CompetitorRatioTab() {
                     <ThemeIcon variant="light" size="lg" color="blue"><IconCalendar size={20} /></ThemeIcon>
                     <Text fw={600} size="md">{data?.info}</Text>
                 </Group>
-                <Badge variant="dot" size="lg">데이터 기준: 2025/12/30</Badge>
+                <Badge variant="dot" size="lg">데이터 기준: 2025/12/31</Badge>
             </Group>
 
             <Card withBorder radius="md" p={0} mb="md">
@@ -334,11 +334,11 @@ export default function CompetitorRatioTab() {
                 <Stack gap="md">
                     <Alert variant="filled" color="violet" title="요약 (Summary)">
                         <Text size="sm" fw={700} mb="xs">
-                            주요 데이터: 당사 '레포츠/건강식품' 강세, CJ '뷰티/건강' 42% 집중, GS '건강/뷰티' 40% 집중
+                            주요 데이터: 당사 '레포츠/건강식품' 강세, CJ '뷰티/건강' 46.5% 집중 (뷰티 24.6%, 건강 21.9%), GS '건강/뷰티' 38.8% 집중
                         </Text>
                         <Stack gap={4}>
-                            <Text size="sm">• <b>당사 편성:</b> 상품1담당(생활/푸드/건강/무형) 비중이 <b>39.4%</b>로 가장 높으나 전월(40.2%) 대비 소폭 감소.</Text>
-                            <Text size="sm">• <b>경쟁사 데이터:</b> CJ(뷰티 24.6%, 건강 21.9%), GS(건강 20.1%, 뷰티 18.8%).</Text>
+                            <Text size="sm">• <b>당사 편성:</b> 상품1담당(생활/푸드/건강/무형) 비중이 <b>39.5%</b>로 가장 높으나 전월(40.2%) 대비 소폭 감소.</Text>
+                            <Text size="sm">• <b>경쟁사 데이터:</b> CJ(뷰티 24.6%, 건강 21.9%), GS(건강 20.0%, 뷰티 18.8%).</Text>
                         </Stack>
                     </Alert>
 
@@ -351,8 +351,8 @@ export default function CompetitorRatioTab() {
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart
                                     data={[
-                                        { name: '상품1담당', prev: 40.2, curr: 39.4 },
-                                        { name: '상품2담당', prev: 34.2, curr: 32.0 },
+                                        { name: '상품1담당', prev: 40.2, curr: 39.5 },
+                                        { name: '상품2담당', prev: 34.2, curr: 32.2 },
                                         { name: '상품3담당', prev: 25.3, curr: 28.0 },
                                     ]}
                                     margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
@@ -363,10 +363,6 @@ export default function CompetitorRatioTab() {
                                     <RechartsTooltip content={<CustomTooltip />} />
                                     <Legend
                                         wrapperStyle={{ fontSize: '12px' }}
-                                        payload={[
-                                            { value: '전월', type: 'rect', color: '#8884d8', id: 'prev' },
-                                            { value: '당월', type: 'rect', color: '#82ca9d', id: 'curr' }
-                                        ]}
                                     />
                                     <Bar dataKey="prev" name="전월" fill="#8884d8" barSize={40} />
                                     <Bar dataKey="curr" name="당월" fill="#82ca9d" barSize={40} />
@@ -374,17 +370,17 @@ export default function CompetitorRatioTab() {
                             </ResponsiveContainer>
                         </Box>
                         <Box mt="md">
-                            <Text size="sm" mb="xs">당사 상품1담당(생활/식품/건강/무형)은 39.4%로 가장 높으며, 전월 대비 0.8%p 감소함.</Text>
+                            <Text size="sm" mb="xs">당사 상품1담당(생활/식품/건강/무형)은 39.5%로 가장 높으며, 전월 대비 0.7%p 감소함.</Text>
                             <Stack gap="sm">
                                 <Box>
                                     <Text size="sm" fw={700}>1) 상품1담당 (생활/푸드/건강/무형)</Text>
-                                    <Text size="xs" pl="sm">• <b>비중:</b> 39.4% (전월 40.2%, -0.8%p)</Text>
-                                    <Text size="xs" pl="sm">• <b>세부 구성:</b> 건강식품 19.1%, 무형 9.4%, 리빙 6.0%, 푸드 4.0%</Text>
+                                    <Text size="xs" pl="sm">• <b>비중:</b> 39.5% (전월 40.2%, -0.7%p)</Text>
+                                    <Text size="xs" pl="sm">• <b>세부 구성:</b> 건강식품 19.2%, 무형 9.4%, 리빙 6.0%, 푸드 4.0%</Text>
                                 </Box>
                                 <Box>
                                     <Text size="sm" fw={700}>2) 상품2담당 (패션/뷰티)</Text>
-                                    <Text size="xs" pl="sm">• <b>비중:</b> 32.0% (전월 34.2%, -2.2%p)</Text>
-                                    <Text size="xs" pl="sm">• <b>세부 구성:</b> 뷰티 16.0%, 의류 15.5%, 잡화 0.5%</Text>
+                                    <Text size="xs" pl="sm">• <b>비중:</b> 32.2% (전월 34.2%, -2.0%p)</Text>
+                                    <Text size="xs" pl="sm">• <b>세부 구성:</b> 뷰티 16.1%, 의류 15.6%, 잡화 0.5%</Text>
                                 </Box>
                                 <Box>
                                     <Text size="sm" fw={700}>3) 상품3담당 (레포츠/언더웨어/브랜드)</Text>
@@ -405,9 +401,9 @@ export default function CompetitorRatioTab() {
                                 <BarChart
                                     layout="vertical"
                                     data={[
-                                        { name: '현대', cloth: 17.2, beauty: 13.6, health: 12.8, leports: 4.7, living: 4.9, kitchen: 7.5, app: 2.4, food: 3.6, misc: 5.2, intangible: 14.1, under: 0.4, others: 13.6 },
-                                        { name: 'GS', cloth: 14.8, beauty: 18.8, health: 20.1, leports: 3.2, living: 7.9, kitchen: 5.4, app: 2.3, food: 4.0, misc: 4.2, intangible: 10.9, under: 1.0, others: 7.4 },
-                                        { name: '롯데', cloth: 20.6, beauty: 17.3, health: 14.5, leports: 6.6, living: 7.4, kitchen: 3.6, app: 2.7, food: 5.5, misc: 10.3, intangible: 10.0, under: 1.1, others: 0.4 },
+                                        { name: '현대', cloth: 17.7, beauty: 13.6, health: 12.8, leports: 4.7, living: 4.8, kitchen: 7.6, app: 2.4, food: 3.6, misc: 4.7, intangible: 14.1, under: 0.4, others: 13.6 },
+                                        { name: 'GS', cloth: 14.7, beauty: 18.8, health: 20.0, leports: 3.1, living: 7.9, kitchen: 5.3, app: 2.3, food: 4.2, misc: 4.2, intangible: 11.0, under: 1.1, others: 7.4 },
+                                        { name: '롯데', cloth: 20.6, beauty: 17.3, health: 14.5, leports: 6.6, living: 7.4, kitchen: 3.6, app: 2.7, food: 5.5, misc: 10.3, intangible: 10.1, under: 1.1, others: 0.3 },
                                         { name: 'CJ', cloth: 17.5, beauty: 24.6, health: 21.9, leports: 3.1, living: 6.6, kitchen: 3.4, app: 1.4, food: 2.3, misc: 7.8, intangible: 10.5, under: 0.8, others: 0.1 },
                                     ]}
                                     margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
@@ -435,22 +431,22 @@ export default function CompetitorRatioTab() {
                         <Stack gap="md" mt="md">
                             <Box>
                                 <Text size="sm" fw={700}>1) 현대홈쇼핑</Text>
-                                <Text size="xs" pl="sm">• <b>편성 비중:</b> 상품1(45.3%) {'>'} 상품2(36.0%) {'>'} 상품3(5.1%)</Text>
+                                <Text size="xs" pl="sm">• <b>편성 비중:</b> 상품1(45.3%) {'>'} 상품2(35.9%) {'>'} 상품3(5.1%)</Text>
                                 <Text size="xs" pl="sm">• <b>주요 데이터:</b> 무형(여행/보험/렌탈) 14.1%.</Text>
                             </Box>
                             <Box>
                                 <Text size="sm" fw={700}>2) GS샵</Text>
-                                <Text size="xs" pl="sm">• <b>편성 비중:</b> 상품1(50.5%) {'>'} 상품2(37.8%) {'>'} 상품3(4.2%)</Text>
-                                <Text size="xs" pl="sm">• <b>주요 데이터:</b> 건강 20.1%, 뷰티 18.8% 강세.</Text>
+                                <Text size="xs" pl="sm">• <b>편성 비중:</b> 상품1(50.7%) {'>'} 상품2(37.6%) {'>'} 상품3(4.2%)</Text>
+                                <Text size="xs" pl="sm">• <b>주요 데이터:</b> 건강 20.0%, 뷰티 18.8% 강세.</Text>
                             </Box>
                             <Box>
                                 <Text size="sm" fw={700}>3) 롯데홈쇼핑</Text>
-                                <Text size="xs" pl="sm">• <b>편성 비중:</b> 상품2(48.2%) {'>'} 상품1(43.7%) {'>'} 상품3(7.7%)</Text>
+                                <Text size="xs" pl="sm">• <b>편성 비중:</b> 상품2(48.2%) {'>'} 상품1(43.8%) {'>'} 상품3(7.7%)</Text>
                                 <Text size="xs" pl="sm">• <b>주요 데이터:</b> 의류 20.6%, 뷰티 17.3%로 패션/뷰티 집중.</Text>
                             </Box>
                             <Box>
                                 <Text size="sm" fw={700}>4) CJ온스타일</Text>
-                                <Text size="xs" pl="sm">• <b>편성 비중:</b> 상품2(49.9%) {'>'} 상품1(46.2%) {'>'} 상품3(3.9%)</Text>
+                                <Text size="xs" pl="sm">• <b>편성 비중:</b> 상품2(49.8%) {'>'} 상품1(46.1%) {'>'} 상품3(3.9%)</Text>
                                 <Text size="xs" pl="sm">• <b>주요 데이터:</b> 뷰티 24.6%, 건강 21.9%로 Dual Core 전략.</Text>
                             </Box>
                         </Stack>
@@ -469,9 +465,9 @@ export default function CompetitorRatioTab() {
                                 <ResponsiveContainer width="100%" height="100%">
                                     <BarChart
                                         data={[
-                                            { name: '주방', shinsegae: 0.9, lotte: 3.6, cj: 3.4, hyundai: 7.5, gs: 5.4 },
+                                            { name: '주방', shinsegae: 0.9, lotte: 3.6, cj: 3.4, hyundai: 7.6, gs: 5.3 },
                                             { name: '가전', shinsegae: 0.0, lotte: 2.7, cj: 1.4, hyundai: 2.4, gs: 2.3 },
-                                            { name: '리빙', shinsegae: 6.0, lotte: 7.4, cj: 6.6, hyundai: 4.9, gs: 7.9 },
+                                            { name: '리빙', shinsegae: 6.0, lotte: 7.4, cj: 6.6, hyundai: 4.8, gs: 7.9 },
                                         ]}
                                         margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
                                         barGap={4}
@@ -481,13 +477,6 @@ export default function CompetitorRatioTab() {
                                         <YAxis tick={{ fontSize: 12 }} />
                                         <RechartsTooltip content={<CustomTooltip />} />
                                         <Legend
-                                            payload={[
-                                                { value: '당사', type: 'rect', color: '#333333' },
-                                                { value: '현대', type: 'rect', color: '#119586' },
-                                                { value: 'GS', type: 'rect', color: '#6CC218' },
-                                                { value: '롯데', type: 'rect', color: '#EE3124' },
-                                                { value: 'CJ', type: 'rect', color: '#6A00A6' }
-                                            ]}
                                             wrapperStyle={{ fontSize: '11px' }}
                                         />
                                         <Bar dataKey="shinsegae" name="당사" fill="#333333" />
@@ -499,11 +488,11 @@ export default function CompetitorRatioTab() {
                                 </ResponsiveContainer>
                             </Box>
                             <Stack gap={2} mt="xs">
-                                <Text size="xs"><b>주방:</b> 현대(7.5%) {'>'} GS(5.4%) {'>'} 롯데(3.6%) {'>'} CJ(3.4%) {'>'} 당사(0.9%)</Text>
+                                <Text size="xs"><b>주방:</b> 현대(7.6%) {'>'} GS(5.3%) {'>'} 롯데(3.6%) {'>'} CJ(3.4%) {'>'} 당사(0.9%)</Text>
                                 <Text size="xs" c="dimmed" pl="sm" mb={4}>주요 아이템: 휘슬러(현대), 테팔(GS).</Text>
                                 <Text size="xs"><b>가전:</b> 롯데(2.7%) {'>'} 현대(2.4%) {'>'} GS(2.3%) {'>'} CJ(1.4%) {'>'} 당사(0.0%)</Text>
                                 <Text size="xs" c="dimmed" pl="sm" mb={4}>주요 아이템: 로보락(현대).</Text>
-                                <Text size="xs"><b>리빙:</b> GS(7.9%) {'>'} 롯데(7.4%) {'>'} CJ(6.6%) {'>'} 당사(6.0%) {'>'} 현대(4.9%)</Text>
+                                <Text size="xs"><b>리빙:</b> GS(7.9%) {'>'} 롯데(7.4%) {'>'} CJ(6.6%) {'>'} 당사(6.0%) {'>'} 현대(4.8%)</Text>
                                 <Text size="xs" c="dimmed" pl="sm">주요 아이템: 일월(GS), 조선호텔(현대).</Text>
                             </Stack>
                         </Box>
@@ -515,8 +504,8 @@ export default function CompetitorRatioTab() {
                                 <ResponsiveContainer width="100%" height="100%">
                                     <BarChart
                                         data={[
-                                            { name: '푸드', shinsegae: 4.0, lotte: 5.5, cj: 2.3, hyundai: 3.6, gs: 4.0 },
-                                            { name: '건강식품', shinsegae: 19.1, lotte: 14.5, cj: 21.9, hyundai: 12.8, gs: 20.1 },
+                                            { name: '푸드', shinsegae: 4.0, lotte: 5.5, cj: 2.3, hyundai: 3.6, gs: 4.2 },
+                                            { name: '건강식품', shinsegae: 19.2, lotte: 14.5, cj: 21.9, hyundai: 12.8, gs: 20.0 },
                                         ]}
                                         margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
                                         barGap={4}
@@ -526,13 +515,6 @@ export default function CompetitorRatioTab() {
                                         <YAxis tick={{ fontSize: 12 }} />
                                         <RechartsTooltip content={<CustomTooltip />} />
                                         <Legend
-                                            payload={[
-                                                { value: '당사', type: 'rect', color: '#333333' },
-                                                { value: '현대', type: 'rect', color: '#119586' },
-                                                { value: 'GS', type: 'rect', color: '#6CC218' },
-                                                { value: '롯데', type: 'rect', color: '#EE3124' },
-                                                { value: 'CJ', type: 'rect', color: '#6A00A6' }
-                                            ]}
                                             wrapperStyle={{ fontSize: '11px' }}
                                         />
                                         <Bar dataKey="shinsegae" name="당사" fill="#333333" />
@@ -544,9 +526,9 @@ export default function CompetitorRatioTab() {
                                 </ResponsiveContainer>
                             </Box>
                             <Stack gap={2} mt="xs">
-                                <Text size="xs"><b>푸드:</b> 롯데(5.5%) {'>'} 당사/GS(4.0%) {'>'} 현대(3.6%) {'>'} CJ(2.3%)</Text>
+                                <Text size="xs"><b>푸드:</b> 롯데(5.5%) {'>'} GS(4.2%) {'>'} 당사(4.0%) {'>'} 현대(3.6%) {'>'} CJ(2.3%)</Text>
                                 <Text size="xs" c="dimmed" pl="sm" mb={4}>주요 아이템: 김나운더키친(롯데).</Text>
-                                <Text size="xs"><b>건강식품:</b> CJ(21.9%) {'>'} GS(20.1%) {'>'} 당사(19.1%) {'>'} 롯데(14.5%) {'>'} 현대(12.8%)</Text>
+                                <Text size="xs"><b>건강식품:</b> CJ(21.9%) {'>'} GS(20.0%) {'>'} 당사(19.2%) {'>'} 롯데(14.5%) {'>'} 현대(12.8%)</Text>
                                 <Text size="xs" c="dimmed" pl="sm">주요 아이템: 비에날씬(당사/GS), 에버콜라겐(CJ).</Text>
                             </Stack>
                         </Box>
@@ -558,7 +540,7 @@ export default function CompetitorRatioTab() {
                                 <ResponsiveContainer width="100%" height="100%">
                                     <BarChart
                                         data={[
-                                            { name: '무형', shinsegae: 9.4, lotte: 10.0, cj: 10.5, hyundai: 14.1, gs: 10.9 },
+                                            { name: '무형', shinsegae: 9.4, lotte: 10.1, cj: 10.5, hyundai: 14.1, gs: 11.0 },
                                         ]}
                                         margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
                                         barGap={4}
@@ -568,13 +550,6 @@ export default function CompetitorRatioTab() {
                                         <YAxis tick={{ fontSize: 12 }} />
                                         <RechartsTooltip content={<CustomTooltip />} />
                                         <Legend
-                                            payload={[
-                                                { value: '당사', type: 'rect', color: '#333333' },
-                                                { value: '현대', type: 'rect', color: '#119586' },
-                                                { value: 'GS', type: 'rect', color: '#6CC218' },
-                                                { value: '롯데', type: 'rect', color: '#EE3124' },
-                                                { value: 'CJ', type: 'rect', color: '#6A00A6' }
-                                            ]}
                                             wrapperStyle={{ fontSize: '11px' }}
                                         />
                                         <Bar dataKey="shinsegae" name="당사" fill="#333333" />
@@ -586,7 +561,7 @@ export default function CompetitorRatioTab() {
                                 </ResponsiveContainer>
                             </Box>
                             <Stack gap={2} mt="xs">
-                                <Text size="xs"><b>무형:</b> 현대(14.1%) {'>'} GS(10.9%) {'>'} CJ(10.5%) {'>'} 롯데(10.0%) {'>'} 당사(9.4%)</Text>
+                                <Text size="xs"><b>무형:</b> 현대(14.1%) {'>'} GS(11.0%) {'>'} CJ(10.5%) {'>'} 롯데(10.1%) {'>'} 당사(9.4%)</Text>
                                 <Text size="xs" c="dimmed" pl="sm" mb={4}>주요 아이템: 롯데관광(당사), 모두투어(현대).</Text>
                             </Stack>
                         </Box>
@@ -598,9 +573,9 @@ export default function CompetitorRatioTab() {
                                 <ResponsiveContainer width="100%" height="100%">
                                     <BarChart
                                         data={[
-                                            { name: '의류', shinsegae: 15.5, lotte: 20.6, cj: 17.5, hyundai: 17.2, gs: 14.8 },
-                                            { name: '잡화', shinsegae: 0.5, lotte: 10.3, cj: 7.8, hyundai: 5.2, gs: 4.2 },
-                                            { name: '뷰티', shinsegae: 16.0, lotte: 17.3, cj: 24.6, hyundai: 13.6, gs: 18.8 },
+                                            { name: '의류', shinsegae: 15.6, lotte: 20.6, cj: 17.5, hyundai: 17.7, gs: 14.7 },
+                                            { name: '잡화', shinsegae: 0.5, lotte: 10.3, cj: 7.8, hyundai: 4.7, gs: 4.2 },
+                                            { name: '뷰티', shinsegae: 16.1, lotte: 17.3, cj: 24.6, hyundai: 13.6, gs: 18.8 },
                                         ]}
                                         margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
                                         barGap={4}
@@ -610,13 +585,6 @@ export default function CompetitorRatioTab() {
                                         <YAxis tick={{ fontSize: 12 }} />
                                         <RechartsTooltip content={<CustomTooltip />} />
                                         <Legend
-                                            payload={[
-                                                { value: '당사', type: 'rect', color: '#333333' },
-                                                { value: '현대', type: 'rect', color: '#119586' },
-                                                { value: 'GS', type: 'rect', color: '#6CC218' },
-                                                { value: '롯데', type: 'rect', color: '#EE3124' },
-                                                { value: 'CJ', type: 'rect', color: '#6A00A6' }
-                                            ]}
                                             wrapperStyle={{ fontSize: '11px' }}
                                         />
                                         <Bar dataKey="shinsegae" name="당사" fill="#333333" />
@@ -628,11 +596,11 @@ export default function CompetitorRatioTab() {
                                 </ResponsiveContainer>
                             </Box>
                             <Stack gap={2} mt="xs">
-                                <Text size="xs"><b>의류:</b> 롯데(20.6%) {'>'} CJ(17.5%) {'>'} 현대(17.2%) {'>'} 당사(15.5%) {'>'} GS(14.8%)</Text>
+                                <Text size="xs"><b>의류:</b> 롯데(20.6%) {'>'} 현대(17.7%) {'>'} CJ(17.5%) {'>'} 당사(15.6%) {'>'} GS(14.7%)</Text>
                                 <Text size="xs" c="dimmed" pl="sm" mb={4}>주요 아이템: LBL(롯데), 더엣지(CJ), 라씨엔토(현대).</Text>
-                                <Text size="xs"><b>잡화:</b> 롯데(10.3%) {'>'} CJ(7.8%) {'>'} 현대(5.2%) {'>'} GS(4.2%) {'>'} 당사(0.5%)</Text>
+                                <Text size="xs"><b>잡화:</b> 롯데(10.3%) {'>'} CJ(7.8%) {'>'} 현대(4.7%) {'>'} GS(4.2%) {'>'} 당사(0.5%)</Text>
                                 <Text size="xs" c="dimmed" pl="sm" mb={4}>주요 아이템: 구찌(롯데), 아메리칸투어리스터(CJ).</Text>
-                                <Text size="xs"><b>뷰티:</b> CJ(24.6%) {'>'} GS(18.8%) {'>'} 롯데(17.3%) {'>'} 당사(16.0%) {'>'} 현대(13.6%)</Text>
+                                <Text size="xs"><b>뷰티:</b> CJ(24.6%) {'>'} GS(18.8%) {'>'} 롯데(17.3%) {'>'} 당사(16.1%) {'>'} 현대(13.6%)</Text>
                                 <Text size="xs" c="dimmed" pl="sm">주요 아이템: 다이슨(CJ), 에이지투웨니스(GS).</Text>
                             </Stack>
                         </Box>
@@ -644,8 +612,8 @@ export default function CompetitorRatioTab() {
                                 <ResponsiveContainer width="100%" height="100%">
                                     <BarChart
                                         data={[
-                                            { name: '레포츠', shinsegae: 15.0, lotte: 6.6, cj: 3.1, hyundai: 4.7, gs: 3.2 },
-                                            { name: '언더웨어', shinsegae: 4.5, lotte: 1.1, cj: 0.8, hyundai: 0.4, gs: 1.0 },
+                                            { name: '레포츠', shinsegae: 15.0, lotte: 6.6, cj: 3.1, hyundai: 4.7, gs: 3.1 },
+                                            { name: '언더웨어', shinsegae: 4.5, lotte: 1.1, cj: 0.8, hyundai: 0.4, gs: 1.1 },
                                             { name: '브랜드P', shinsegae: 8.6, lotte: 0.0, cj: 0.0, hyundai: 0.0, gs: 0.0 },
                                         ]}
                                         margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
@@ -656,13 +624,6 @@ export default function CompetitorRatioTab() {
                                         <YAxis tick={{ fontSize: 12 }} />
                                         <RechartsTooltip content={<CustomTooltip />} />
                                         <Legend
-                                            payload={[
-                                                { value: '당사', type: 'rect', color: '#333333' },
-                                                { value: '현대', type: 'rect', color: '#119586' },
-                                                { value: 'GS', type: 'rect', color: '#6CC218' },
-                                                { value: '롯데', type: 'rect', color: '#EE3124' },
-                                                { value: 'CJ', type: 'rect', color: '#6A00A6' }
-                                            ]}
                                             wrapperStyle={{ fontSize: '11px' }}
                                         />
                                         <Bar dataKey="shinsegae" name="당사" fill="#333333" />
@@ -674,17 +635,17 @@ export default function CompetitorRatioTab() {
                                 </ResponsiveContainer>
                             </Box>
                             <Stack gap={2} mt="xs">
-                                <Text size="xs"><b>레포츠:</b> 당사(15.0%) {'>'} 롯데(6.6%) {'>'} 현대(4.7%) {'>'} GS(3.2%) {'>'} CJ(3.1%)</Text>
+                                <Text size="xs"><b>레포츠:</b> 당사(15.0%) {'>'} 롯데(6.6%) {'>'} 현대(4.7%) {'>'} CJ(3.1%) {'>'} GS(3.1%)</Text>
                                 <Text size="xs" c="dimmed" pl="sm" mb={4}>주요 아이템: 내셔널지오그래픽(당사), 캘러웨이(롯데).</Text>
-                                <Text size="xs"><b>언더웨어:</b> 당사(4.5%) {'>'} 롯데(1.1%) {'>'} GS(1.0%) {'>'} CJ(0.8%) {'>'} 현대(0.4%)</Text>
+                                <Text size="xs"><b>언더웨어:</b> 당사(4.5%) {'>'} 롯데(1.1%) {'>'} GS(1.1%) {'>'} CJ(0.8%) {'>'} 현대(0.4%)</Text>
                                 <Text size="xs" c="dimmed" pl="sm" mb={4}>주요 아이템: 푸마 바디웨어(당사).</Text>
                                 <Text size="xs"><b>브랜드패션:</b> 당사(8.6%) {'>'} 타사(0%)</Text>
                                 <Text size="xs" c="dimmed" pl="sm">특이사항: 당사 단독 편성 카테고리.</Text>
                             </Stack>
                         </Box>
-                    </Box>
-                </Stack>
-            </Box>
-        </Box>
+                    </Box >
+                </Stack >
+            </Box >
+        </Box >
     );
 }

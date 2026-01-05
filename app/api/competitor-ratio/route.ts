@@ -6,7 +6,7 @@ import fs from 'fs';
 export async function GET() {
     try {
         console.log('Current working directory:', process.cwd());
-        const filePath = path.join(process.cwd(), 'data', '251230_competitor_ratio.xlsx');
+        const filePath = path.join(process.cwd(), 'data', '251231_competitor_ratio.xlsx');
         console.log('Attempting to read file at:', filePath);
 
         // Use fs to read the file buffer directly
@@ -23,7 +23,8 @@ export async function GET() {
 
         // 1. Get Info text from A2 (Cell "A2")
         const infoCell = sheet['A2'];
-        const infoText = infoCell ? infoCell.v : '';
+        let infoText = infoCell ? String(infoCell.v) : '';
+        infoText = infoText.replace('출력자 : 허환', '').trim();
 
         // 2. Data Range: A5 to Q31 (Rows 4 to 30, Cols 0 to 16)
         // Actually, let's be dynamic about rows if possible, or stick to user request A3-Q31.
