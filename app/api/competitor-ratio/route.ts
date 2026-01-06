@@ -3,42 +3,93 @@ import path from 'path';
 import * as XLSX from 'xlsx';
 import fs from 'fs';
 
-export async function GET() {
+function getLatestDetailFile(dir: string): string | null {
     try {
-        console.log('Current working directory:', process.cwd());
-        const filePath = path.join(process.cwd(), 'data', '251231_competitor_ratio.xlsx');
-        console.log('Attempting to read file at:', filePath);
+        const files = fs.readdirSync(dir).filter(f => f.includes('tb_ai_sche_comp_sml_rslt') && f.endsWith('.xlsx'));
+        if (files.length === 0) return null;
+        return files.sort().pop() || null;
+    } catch (e) {
+        console.error("Error finding detail file", e);
+        return null;
+    }
+}
 
-        // Use fs to read the file buffer directly
+function mapCategory(k: string): string | null {
+    if (!k) return null;
+    if (k.includes('의류')) return 'cloth';
+    if (k.includes('뷰티') || k.includes('이미용')) return 'beauty';
+    if (k.includes('건강')) return 'health';
+    if (k.includes('레포츠')) return 'leports';
+    if (k.includes('주방')) return 'kitchen';
+    if (k.includes('가전') || k.includes('디지털')) return 'app';
+    if (k.includes('리빙') || k.includes('생활')) return 'living'; // '생활용품'? '침구'?
+    if (k.includes('푸드') || k.includes('식품') || k.includes('농수축')) return 'food';
+    if (k.includes('잡화')) return 'misc';
+    if (k.includes('무형') || k.includes('여행') || k.includes('렌탈') || k.includes('보험')) return 'intangible';
+    if (k.includes('속옷') || k.includes('언더웨어')) return 'under';
+    if (k.includes('패션')) return 'brand'; // Ambiguous? '브랜드패션'?
+    return 'others';
+}
+
+function mapCompetitor(val: string): string | null {
+    if (!val) return null;
+    if (val.includes('현대')) return 'hyundai';
+    if (val.includes('GS') || val.includes('지에스')) return 'gs';
+    if (val.includes('롯데')) return 'lotte';
+    if (val.includes('CJ') || val.includes('씨제이')) return 'cj';
+    return null;
+}
+
+export async function GET(request: Request) {
+    try {
+        const { searchParams } = new URL(request.url);
+        const monthParam = searchParams.get('month'); // "2025-01"
+
+        let fileName = '251231_competitor_ratio.xlsx'; // Fallback
+
+        // 1. Determine Competitor Ratio File
+        if (monthParam) {
+            const [year, month] = monthParam.split('-');
+            const yy = year.slice(2);
+            // Default logic: YYMM_competitor_ratio.xlsx
+            // But check if exists, maybe 251230 exists but 2512 doesn't.
+            // Simplified: Try 251230 first if requested Dec 2025?
+            // Actually the pattern seems to be [YY][MM]_competitor_ratio.xlsx from user prompt?
+            // "2501_competitor_ratio.xlsx" exists.
+            fileName = `${yy}${month}_competitor_ratio.xlsx`;
+
+            // Fallback for Dec 2025 specific case if standard name fails?
+            // Users file list showed 251230_competitor_ratio.xlsx and 2501_competitor_ratio.xlsx.
+            // If user asks for 2025-12, constructing 2512_competitor_ratio.xlsx might fail.
+            // Let's check existence and fallback to 251230 if 2512 missing.
+            const p = path.join(process.cwd(), 'data', fileName);
+            if (!fs.existsSync(p)) {
+                if (yy === '25' && month === '12') fileName = '251230_competitor_ratio.xlsx';
+            }
+        }
+
+        const filePath = path.join(process.cwd(), 'data', fileName);
+
         if (!fs.existsSync(filePath)) {
-            console.error('File does not exist at path:', filePath);
             return NextResponse.json({ error: 'File not found' }, { status: 404 });
         }
 
         const fileBuffer = fs.readFileSync(filePath);
         const workbook = XLSX.read(fileBuffer, { type: 'buffer' });
-
         const sheetName = workbook.SheetNames[0];
         const sheet = workbook.Sheets[sheetName];
 
-        // 1. Get Info text from A2 (Cell "A2")
         const infoCell = sheet['A2'];
         let infoText = infoCell ? String(infoCell.v) : '';
-        infoText = infoText.replace('출력자 : 허환', '').trim();
+        const splitKeyword = '방송사: 전체';
+        if (infoText.includes(splitKeyword)) {
+            infoText = infoText.split(splitKeyword)[0] + splitKeyword;
+        }
+        infoText = infoText.trim().replace(/,$/, '');
 
-        // 2. Data Range: A5 to Q31 (Rows 4 to 30, Cols 0 to 16)
-        // Actually, let's be dynamic about rows if possible, or stick to user request A3-Q31.
-        // User said: A3 to Q31.
-        // A3 is Header Row 1.
-        // A4 is Header Row 2.
-        // A5 is Data Start.
-
-        // We will extract data rows manually to ensure we get exactly what we want.
         const data = [];
-        const startRow = 4; // Row 5 (0-indexed 4)
-        const endRow = 30;  // Row 31 (0-indexed 30)
-
-        // Columns 0 to 16 (A to Q)
+        const startRow = 4;
+        const endRow = 30;
         const cols = 17;
 
         for (let r = startRow; r <= endRow; r++) {
@@ -47,17 +98,7 @@ export async function GET() {
                 const cellAddress = XLSX.utils.encode_cell({ r, c });
                 const cell = sheet[cellAddress];
                 let val = cell ? cell.v : '';
-
-                // Format percentages if raw number
                 if (cell && cell.t === 'n' && (c >= 2)) {
-                    // If it's a number, it might be a percentage (0.402) or whole number. 
-                    // The excel might store it as 0.402 and format it.
-                    // XLSX.readFile usually keeps 'v' as raw value and 'w' as formatted text.
-                    // Let's prefer 'w' (formatted text) if available to match Excel display,
-                    // but 'w' might not be available if not formatted correctly in parsing.
-                    // However, users usually want what they see. '3.1▼' is definitely a string in the cell?
-                    // Or is it a number with custom formatting?
-                    // If it contains "▼", it's likely a string string or custom format.
                     if (cell.w) val = cell.w;
                 }
                 rowData.push(val);
@@ -65,9 +106,55 @@ export async function GET() {
             data.push(rowData);
         }
 
+        // --- 2. Extract Top Items from Ratio File ---
+        const topItems: Record<string, Record<string, string[]>> = {
+            hyundai: {}, gs: {}, lotte: {}, cj: {}
+        };
+
+        const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 }) as any[][];
+        // Find header row containing '현대 1위'
+        const headerIndex = jsonData.findIndex(row => row && row.includes('현대 1위'));
+
+        if (headerIndex !== -1) {
+            const headerRow = jsonData[headerIndex];
+            const idxMap: any = {
+                hyundai: headerRow.indexOf('현대 1위'),
+                gs: headerRow.indexOf('GS 1위'),
+                lotte: headerRow.indexOf('롯데 1위'),
+                cj: headerRow.indexOf('CJ 1위')
+            };
+
+            for (let i = headerIndex + 1; i < jsonData.length; i++) {
+                const row = jsonData[i];
+                if (!row) continue;
+
+                // Assuming Name is at index 1 (Col B)
+                // Need to match 100% with 'mapCategory' logic used elsewhere or 'cats' logic
+                // The helper mapCategory matches substrings provided in 'row[1]'
+                const catName = String(row[1] || '');
+                const catKey = mapCategory(catName);
+
+                if (catKey && catKey !== 'others') {
+                    Object.keys(idxMap).forEach(k => {
+                        const colIdx = idxMap[k];
+                        if (colIdx > -1 && row[colIdx]) {
+                            const val = String(row[colIdx]).trim();
+                            if (val) {
+                                if (!topItems[k][catKey]) topItems[k][catKey] = [];
+                                // Avoid duplicates if row appears multiple times or similar logic?
+                                // Just push 
+                                topItems[k][catKey].push(val);
+                            }
+                        }
+                    });
+                }
+            }
+        }
+
         return NextResponse.json({
             info: infoText,
-            data
+            data,
+            topItems
         });
     } catch (error) {
         console.error(error);
