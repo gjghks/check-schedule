@@ -300,11 +300,11 @@ export default function CompetitorRatioTab() {
             });
         };
 
-        const chart3_1 = buildChart3(['kitchen', 'app', 'living', 'mobile1']);
+        const chart3_1 = buildChart3(['kitchen', 'app', 'living']);
         const chart3_2 = buildChart3(['food', 'health']);
         const chart3_3 = buildChart3(['travel', 'insurance', 'rental_gen', 'rental_big']);
         const chart3_4 = buildChart3(['cloth', 'misc', 'beauty']);
-        const chart3_5 = buildChart3(['leports', 'under', 'brand', 'mobile2']);
+        const chart3_5 = buildChart3(['leports', 'under', 'brand']);
         const chart3_6 = buildChart3(['unmapped']);
 
         const getRankingStr = (items: { name: string, val: number }[]) => {
@@ -421,6 +421,7 @@ export default function CompetitorRatioTab() {
 
             let topCat = { name: '', val: 0 };
             cats.forEach(cat => {
+                if (['mobile1', 'mobile2'].includes(cat.key)) return;
                 const v = getVal(rowMap[cat.key], colIdx);
                 if (v > topCat.val) topCat = { name: cat.name, val: v };
             });
@@ -498,11 +499,11 @@ export default function CompetitorRatioTab() {
         };
 
         const section3 = [
-            generateCompSection('1) 주방 / 가전 / 리빙 / 모바일1', ['kitchen', 'app', 'living', 'mobile1']),
+            generateCompSection('1) 주방 / 가전 / 리빙', ['kitchen', 'app', 'living']),
             generateCompSection('2) 푸드 / 건강식품', ['food', 'health']),
             generateCompSection('3) 여행 / 보험 / 렌탈', ['travel', 'insurance', 'rental_gen', 'rental_big']),
             generateCompSection('4) 의류 / 잡화 / 뷰티', ['cloth', 'misc', 'beauty']),
-            generateCompSection('5) 레포츠 / 언더웨어 / 브랜드 / 모바일2', ['leports', 'under', 'brand', 'mobile2']),
+            generateCompSection('5) 레포츠 / 언더웨어 / 브랜드', ['leports', 'under', 'brand']),
             generateCompSection('6) 미매핑', ['unmapped'])
         ];
 
@@ -777,11 +778,9 @@ export default function CompetitorRatioTab() {
                                             <Bar dataKey="insurance" name="보험" stackId="a" fill="#83aac2" />
                                             <Bar dataKey="rental_gen" name="일반렌탈" stackId="a" fill="#82ca9d" />
                                             <Bar dataKey="rental_big" name="대품렌탈" stackId="a" fill="#a4de6c" />
-                                            <Bar dataKey="mobile1" name="모바일상품1" stackId="a" fill="#cccccc" />
                                             <Bar dataKey="cloth" name="의류" stackId="a" fill="#8884d8" />
                                             <Bar dataKey="misc" name="잡화" stackId="a" fill="#a4de6c" />
                                             <Bar dataKey="beauty" name="뷰티" stackId="a" fill="#82ca9d" />
-                                            <Bar dataKey="mobile2" name="모바일상품2" stackId="a" fill="#b0b0b0" />
                                             <Bar dataKey="leports" name="레포츠" stackId="a" fill="#ff8042" />
                                             <Bar dataKey="under" name="언더웨어" stackId="a" fill="#d35400" />
                                             <Bar dataKey="brand" name="브랜드패션" stackId="a" fill="#6a00a6" />
@@ -807,7 +806,7 @@ export default function CompetitorRatioTab() {
                                 {/* Monthly Category Charts */}
                                 <Stack gap="xl">
                                     <Box>
-                                        <Title order={5} mb="xs">1) 주방 / 가전 / 리빙 / 모바일1</Title>
+                                        <Title order={5} mb="xs">1) 주방 / 가전 / 리빙</Title>
                                         <Box h={200}>
                                             <ResponsiveContainer width="100%" height="100%">
                                                 <BarChart data={chart3_1} barGap={4}>
@@ -850,7 +849,7 @@ export default function CompetitorRatioTab() {
                                                 '2) 푸드 / 건강식품',
                                                 '3) 여행 / 보험 / 렌탈',
                                                 '4) 의류 / 잡화 / 뷰티',
-                                                '5) 레포츠 / 언더웨어 / 브랜드 / 모바일2',
+                                                '5) 레포츠 / 언더웨어 / 브랜드',
                                                 '6) 미매핑'
                                             ][cIdx]}</Title>
                                             <Box h={200}>
@@ -935,7 +934,7 @@ export default function CompetitorRatioTab() {
                                 <Group mb="md" justify="space-between">
                                     <Group>
                                         <IconChartBar size={24} color="#fa5252" />
-                                        <Text size="lg" fw={700} c="red">2. 카테고리별 시장 대비 격차 (Market Gap Analysis)</Text>
+                                        <Text size="lg" fw={700} c="red">2. 카테고리별 경쟁사 대비</Text>
                                     </Group>
                                     <SegmentedControl
                                         value={gapTarget}
