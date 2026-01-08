@@ -941,14 +941,16 @@ export default function CompetitorRatioTab() {
                                         <Tabs.Tab value="kitchen">주방/가전/리빙</Tabs.Tab>
                                         <Tabs.Tab value="food">푸드/건강</Tabs.Tab>
                                         <Tabs.Tab value="fashion">패션/뷰티/잡화</Tabs.Tab>
-                                        <Tabs.Tab value="leports">레포츠/기타</Tabs.Tab>
+                                        <Tabs.Tab value="leports">레포츠/언더웨어</Tabs.Tab>
+                                        <Tabs.Tab value="intangible">무형</Tabs.Tab>
                                     </Tabs.List>
 
                                     {[
                                         { key: 'kitchen', items: ['kitchen', 'app', 'living'] },
                                         { key: 'food', items: ['food', 'health'] },
                                         { key: 'fashion', items: ['cloth', 'beauty', 'misc'] },
-                                        { key: 'leports', items: ['leports', 'under', 'intangible'] }
+                                        { key: 'leports', items: ['leports', 'under'] },
+                                        { key: 'intangible', items: ['travel', 'insurance', 'rental_gen', 'rental_big'] }
                                     ].map(group => (
                                         <Tabs.Panel key={group.key} value={group.key} pt="xs">
                                             <Grid>
@@ -972,7 +974,9 @@ export default function CompetitorRatioTab() {
                                                         kitchen: '주방', app: '가전', living: '리빙',
                                                         food: '푸드', health: '건강식품',
                                                         cloth: '의류', beauty: '뷰티', misc: '잡화',
-                                                        leports: '레포츠', under: '언더웨어', intangible: '무형'
+                                                        leports: '레포츠', under: '언더웨어',
+                                                        travel: '여행', insurance: '보험',
+                                                        rental_gen: '일반렌탈', rental_big: '대품렌탈'
                                                     }[catKey] || catKey;
 
                                                     return (
