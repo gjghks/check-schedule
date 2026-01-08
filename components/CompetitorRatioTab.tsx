@@ -102,6 +102,7 @@ export default function CompetitorRatioTab() {
     const [yearlyData, setYearlyData] = useState<YearlyData | null>(null);
     const [loading, setLoading] = useState(true);
     const [selectedDate, setSelectedDate] = useState<Date | null>(new Date(2025, 11, 1)); // Default Dec 2025
+    const [gapTarget, setGapTarget] = useState<string>('avg');
 
     useEffect(() => {
         if (!selectedDate && viewMode === 'monthly') return;
@@ -931,9 +932,23 @@ export default function CompetitorRatioTab() {
                         {/* Section 2 & 3: Category Trend & Gap */}
                         <Grid.Col span={12}>
                             <Paper p="md" withBorder radius="md">
-                                <Group mb="md">
-                                    <IconChartBar size={24} color="#fa5252" />
-                                    <Text size="lg" fw={700} c="red">2. 카테고리별 시장 대비 격차 (Market Gap Analysis)</Text>
+                                <Group mb="md" justify="space-between">
+                                    <Group>
+                                        <IconChartBar size={24} color="#fa5252" />
+                                        <Text size="lg" fw={700} c="red">2. 카테고리별 시장 대비 격차 (Market Gap Analysis)</Text>
+                                    </Group>
+                                    <SegmentedControl
+                                        value={gapTarget}
+                                        onChange={setGapTarget}
+                                        data={[
+                                            { label: '경쟁사 평균', value: 'avg' },
+                                            { label: '현대', value: 'hyundai' },
+                                            { label: 'GS', value: 'gs' },
+                                            { label: '롯데', value: 'lotte' },
+                                            { label: 'CJ', value: 'cj' },
+                                        ]}
+                                        size="xs"
+                                    />
                                 </Group>
 
                                 <Tabs defaultValue="kitchen">
@@ -960,12 +975,19 @@ export default function CompetitorRatioTab() {
 
                                                     const chartData = yearlyData.labels.map((lbl, i) => {
                                                         const us = catData.shinsegae[i];
-                                                        const compAvg = (catData.hyundai[i] + catData.gs[i] + catData.lotte[i] + catData.cj[i]) / 4;
+                                                        let targetVal = 0;
+                                                        if (gapTarget === 'avg') {
+                                                            targetVal = (catData.hyundai[i] + catData.gs[i] + catData.lotte[i] + catData.cj[i]) / 4;
+                                                        } else {
+                                                            // @ts-ignore
+                                                            targetVal = catData[gapTarget]?.[i] || 0;
+                                                        }
+
                                                         return {
                                                             name: lbl,
                                                             us,
-                                                            compAvg,
-                                                            gap: us - compAvg
+                                                            targetVal,
+                                                            gap: us - targetVal
                                                         };
                                                     });
 
@@ -979,10 +1001,12 @@ export default function CompetitorRatioTab() {
                                                         rental_gen: '일반렌탈', rental_big: '대품렌탈'
                                                     }[catKey] || catKey;
 
+                                                    const targetName = gapTarget === 'avg' ? '경쟁사평균' : { hyundai: '현대', gs: 'GS', lotte: '롯데', cj: 'CJ' }[gapTarget];
+
                                                     return (
                                                         <Grid.Col span={4} key={catKey}>
                                                             <Card withBorder radius="sm" padding="sm">
-                                                                <Text fw={700} size="sm" mb="xs" ta="center">{catName} 격차 (당사 - 경쟁사평균)</Text>
+                                                                <Text fw={700} size="sm" mb="xs" ta="center">{catName} 격차 (당사 - {targetName})</Text>
                                                                 <Box h={150}>
                                                                     <ResponsiveContainer width="100%" height="100%">
                                                                         <ComposedChart data={chartData}>
@@ -1001,7 +1025,7 @@ export default function CompetitorRatioTab() {
                                                                                 ))}
                                                                             </Bar>
                                                                             <Line type="monotone" dataKey="us" name="당사 비중" stroke="#ff8787" dot={false} strokeWidth={1} />
-                                                                            <Line type="monotone" dataKey="compAvg" name="경쟁사 평균" stroke="#adb5bd" dot={false} strokeWidth={1} strokeDasharray="3 3" />
+                                                                            <Line type="monotone" dataKey="targetVal" name={`${targetName} 비중`} stroke="#adb5bd" dot={false} strokeWidth={1} strokeDasharray="3 3" />
                                                                         </ComposedChart>
                                                                     </ResponsiveContainer>
                                                                 </Box>
@@ -1015,9 +1039,9 @@ export default function CompetitorRatioTab() {
                                 </Tabs>
                                 <Alert variant="light" color="red" mt="md">
                                     <Text size="sm">
-                                        * <Text span fw={700} c="red">빨간 막대</Text>: 경쟁사 평균보다 많이 편성함 (Gap {'>'} 0) <br />
-                                        * <Text span fw={700} c="blue">파란 막대</Text>: 경쟁사 평균보다 적게 편성함 (Gap {'<'} 0) <br />
-                                        * 점선은 경쟁사 평균 비중, 실선은 당사 비중입니다.
+                                        * <Text span fw={700} c="red">빨간 막대</Text>: {gapTarget === 'avg' ? '경쟁사 평균' : { hyundai: '현대', gs: 'GS', lotte: '롯데', cj: 'CJ' }[gapTarget]}보다 많이 편성함 (Gap {'>'} 0) <br />
+                                        * <Text span fw={700} c="blue">파란 막대</Text>: {gapTarget === 'avg' ? '경쟁사 평균' : { hyundai: '현대', gs: 'GS', lotte: '롯데', cj: 'CJ' }[gapTarget]}보다 적게 편성함 (Gap {'<'} 0) <br />
+                                        * 점선은 {gapTarget === 'avg' ? '경쟁사 평균' : { hyundai: '현대', gs: 'GS', lotte: '롯데', cj: 'CJ' }[gapTarget]} 비중, 실선은 당사 비중입니다.
                                     </Text>
                                 </Alert>
                             </Paper>
