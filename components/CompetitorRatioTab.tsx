@@ -1023,8 +1023,6 @@ export default function CompetitorRatioTab() {
                                                                                     <Cell key={`cell-${index}`} fill={entry.gap > 0 ? '#f03e3e' : '#1c7ed6'} />
                                                                                 ))}
                                                                             </Bar>
-                                                                            <Line type="monotone" dataKey="us" name="당사 비중" stroke="#ff8787" dot={false} strokeWidth={1} />
-                                                                            <Line type="monotone" dataKey="targetVal" name={`${targetName} 비중`} stroke="#adb5bd" dot={false} strokeWidth={1} strokeDasharray="3 3" />
                                                                         </ComposedChart>
                                                                     </ResponsiveContainer>
                                                                 </Box>
@@ -1039,8 +1037,7 @@ export default function CompetitorRatioTab() {
                                 <Alert variant="light" color="red" mt="md">
                                     <Text size="sm">
                                         * <Text span fw={700} c="red">빨간 막대</Text>: {gapTarget === 'avg' ? '경쟁사 평균' : { hyundai: '현대', gs: 'GS', lotte: '롯데', cj: 'CJ' }[gapTarget]}보다 많이 편성함 (Gap {'>'} 0) <br />
-                                        * <Text span fw={700} c="blue">파란 막대</Text>: {gapTarget === 'avg' ? '경쟁사 평균' : { hyundai: '현대', gs: 'GS', lotte: '롯데', cj: 'CJ' }[gapTarget]}보다 적게 편성함 (Gap {'<'} 0) <br />
-                                        * 점선은 {gapTarget === 'avg' ? '경쟁사 평균' : { hyundai: '현대', gs: 'GS', lotte: '롯데', cj: 'CJ' }[gapTarget]} 비중, 실선은 당사 비중입니다.
+                                        * <Text span fw={700} c="blue">파란 막대</Text>: {gapTarget === 'avg' ? '경쟁사 평균' : { hyundai: '현대', gs: 'GS', lotte: '롯데', cj: 'CJ' }[gapTarget]}보다 적게 편성함 (Gap {'<'} 0)
                                     </Text>
                                 </Alert>
                             </Paper>
