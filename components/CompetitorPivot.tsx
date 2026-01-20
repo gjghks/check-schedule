@@ -305,21 +305,7 @@ export default function CompetitorPivot({ schedules }: Props) {
         return list.filter(b => selectedFilters[KEY_BROADCASTER].has(b));
     }, [uniqueValues.broadcasters, selectedFilters]);
 
-    // 7. Calculate Top 5 Roots
-    const top5Roots = useMemo(() => {
-        const rootTotals: { name: string, total: number }[] = [];
-        tree.forEach((node) => {
-            const total = columns.reduce((acc, col) => acc + (node.values[col] || 0), 0);
-            rootTotals.push({ name: node.name, total });
-        });
-        rootTotals.sort((a, b) => b.total - a.total);
 
-        const rankMap = new Map<string, number>();
-        rootTotals.slice(0, 5).forEach((item, index) => {
-            if (item.total > 0) rankMap.set(item.name, index + 1);
-        });
-        return rankMap;
-    }, [tree, columns]);
 
     // 6. Expansion State
     const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -330,6 +316,7 @@ export default function CompetitorPivot({ schedules }: Props) {
         else newSet.add(id);
         setExpanded(newSet);
     };
+
 
     // --- Brand Status Checking Logic ---
     const [brandStatus, setBrandStatus] = useState<BrandCheckResult>({});
@@ -382,6 +369,45 @@ export default function CompetitorPivot({ schedules }: Props) {
         return () => clearTimeout(timer);
     }, [uniqueFilteredData]);
 
+    // Calculate Brand Stats (Operating/Non-Operating) per Node
+    const brandAggregatedStats = useMemo(() => {
+        const stats = new Map<string, { operating: Set<string>, nonOperating: Set<string> }>();
+
+        const getOrInit = (k: string) => {
+            if (!stats.has(k)) stats.set(k, { operating: new Set(), nonOperating: new Set() });
+            return stats.get(k)!;
+        };
+
+        uniqueFilteredData.forEach(row => {
+            const md = row.other_md_name_1;
+            const mid = row.other_mgroupn_name;
+            const small = row.other_sgroupn_name;
+            const brand = row.company_brand_name;
+
+            // Skip bad data or unmapped brands
+            if (!md || !mid || !small || !brand) return;
+            if (brand === '미매핑' || brand === '(미매핑)') return;
+
+            const key = `${md}|${mid}|${small}|${brand}`;
+            const status = brandStatus[key];
+
+            if (status) {
+                const targetSet = status.found ? 'operating' : 'nonOperating';
+
+                // Add to MD level
+                getOrInit(md)[targetSet].add(brand);
+
+                // Add to Mid level
+                getOrInit(`${md}|${mid}`)[targetSet].add(brand);
+
+                // Add to Small level
+                getOrInit(`${md}|${mid}|${small}`)[targetSet].add(brand);
+            }
+        });
+
+        return stats;
+    }, [uniqueFilteredData, brandStatus]);
+
     const renderRowsWithStatus = (nodes: Map<string, TreeItem>, level: number, pathContext: { md: string, mid: string, small: string }) => {
         const MD_CAT_ORDER = ['주방', '가전', '리빙', '푸드', '건강식품', '여행', '보험', '일반렌탈', '대품렌탈', '의류', '잡화', '뷰티', '레포츠', '언더웨어', '브랜드패션', '미매핑', '(미매핑)', '(없음)'];
 
@@ -407,29 +433,89 @@ export default function CompetitorPivot({ schedules }: Props) {
             const indent = level * 20;
             const hasChildren = !node.isLeaf && node.children && node.children.size > 0;
 
-            const rank = (level === 0) ? top5Roots.get(node.name) : undefined;
-            let rowBg = level === 0 ? '#f8f9fa' : (level === 1 ? '#fff' : '#fafafa');
-            if (rank) {
-                if (rank === 1) rowBg = '#fff9db';
-                else if (rank === 2) rowBg = '#f1f3f5';
-                else if (rank === 3) rowBg = '#fff4e6';
+            const rowBg = level === 0 ? '#f8f9fa' : (level === 1 ? '#fff' : '#fafafa');
+
+            // Brand Status Check
+            let contentElement = <Text size="sm" fw={level === 0 ? 700 : (level === 1 ? 500 : 400)}>{node.name}</Text>;
+
+            // Add Brand Stats Count for Levels 0, 1, 2
+            if (level < 3) {
+                let key = "";
+                if (level === 0) key = node.name;
+                else if (level === 1) key = `${pathContext.md}|${node.name}`;
+                else if (level === 2) key = `${pathContext.md}|${pathContext.mid}|${node.name}`;
+
+                const stats = brandAggregatedStats.get(key);
+
+                if (stats && (stats.nonOperating.size > 0 || stats.operating.size > 0)) {
+                    contentElement = (
+                        <Group gap={8}>
+                            <Text size="sm" fw={level === 0 ? 700 : (level === 1 ? 500 : 400)}>{node.name}</Text>
+
+                            {/* Non-Operating Badge */}
+                            {stats.nonOperating.size > 0 && (
+                                <Popover width={200} position="bottom" withArrow shadow="md">
+                                    <Popover.Target>
+                                        <Badge
+                                            size="xs"
+                                            color="red"
+                                            variant="light"
+                                            style={{ cursor: 'pointer', textTransform: 'none' }}
+                                        >
+                                            미운영 {stats.nonOperating.size}
+                                        </Badge>
+                                    </Popover.Target>
+                                    <Popover.Dropdown>
+                                        <Text size="xs" fw={700} mb={4}>미운영 브랜드 목록</Text>
+                                        <ScrollArea.Autosize mah={200}>
+                                            <Stack gap={4}>
+                                                {Array.from(stats.nonOperating).sort().map(b => (
+                                                    <Text key={b} size="xs" c="dimmed">• {b}</Text>
+                                                ))}
+                                            </Stack>
+                                        </ScrollArea.Autosize>
+                                    </Popover.Dropdown>
+                                </Popover>
+                            )}
+
+                            {/* Operating Badge */}
+                            {stats.operating.size > 0 && (
+                                <Popover width={200} position="bottom" withArrow shadow="md">
+                                    <Popover.Target>
+                                        <Badge
+                                            size="xs"
+                                            color="blue"
+                                            variant="light"
+                                            style={{ cursor: 'pointer', textTransform: 'none' }}
+                                        >
+                                            운영 {stats.operating.size}
+                                        </Badge>
+                                    </Popover.Target>
+                                    <Popover.Dropdown>
+                                        <Text size="xs" fw={700} mb={4}>운영 브랜드 목록</Text>
+                                        <ScrollArea.Autosize mah={200}>
+                                            <Stack gap={4}>
+                                                {Array.from(stats.operating).sort().map(b => (
+                                                    <Text key={b} size="xs" c="blue">• {b}</Text>
+                                                ))}
+                                            </Stack>
+                                        </ScrollArea.Autosize>
+                                    </Popover.Dropdown>
+                                </Popover>
+                            )}
+                        </Group>
+                    );
+                }
             }
 
-            let badge = null;
-            if (rank) {
-                badge = <Badge color={rank <= 3 ? (rank === 1 ? "yellow" : (rank === 2 ? "gray" : "orange")) : "blue"} variant="filled" size="xs" circle style={{ width: 16, height: 16, minWidth: 16, padding: 0 }}>{rank}</Badge>;
-            }
-
-            // Brand Status Check (Level 3)
-            let brandElement = <Text size="sm" fw={level === 0 ? 700 : (level === 1 ? 500 : 400)}>{node.name}</Text>;
-
+            // Brand Level (Level 3)
             if (level === 3) {
                 const key = `${newContext.md}|${newContext.mid}|${newContext.small}|${node.name}`;
                 const status = brandStatus[key];
 
                 if (status) {
                     if (!status.found) {
-                        brandElement = (
+                        contentElement = (
                             <Tooltip label="당사 브랜드 DB에 없는 브랜드입니다." withArrow>
                                 <Group gap={4}>
                                     <Text size="sm" c="dimmed" style={{ textDecoration: 'line-through' }}>{node.name}</Text>
@@ -438,7 +524,7 @@ export default function CompetitorPivot({ schedules }: Props) {
                             </Tooltip>
                         );
                     } else {
-                        brandElement = (
+                        contentElement = (
                             <Popover width={400} position="bottom-start" withArrow shadow="md">
                                 <Popover.Target>
                                     <Group gap={4} style={{ cursor: 'pointer' }}>
@@ -480,8 +566,7 @@ export default function CompetitorPivot({ schedules }: Props) {
                                         {isExpanded ? <IconChevronDown size={14} /> : <IconChevronRight size={14} />}
                                     </UnstyledButton>
                                 )}
-                                {badge && <Box>{badge}</Box>}
-                                {brandElement}
+                                {contentElement}
                             </Group>
                         </Table.Td>
                         {columns.map(col => {
@@ -492,7 +577,7 @@ export default function CompetitorPivot({ schedules }: Props) {
                                 </Table.Td>
                             );
                         })}
-                        <Table.Td style={{ textAlign: 'right', fontWeight: 700, backgroundColor: rank ? 'transparent' : '#f9f9f9' }}>
+                        <Table.Td style={{ textAlign: 'right', fontWeight: 700, backgroundColor: '#f9f9f9' }}>
                             {(() => {
                                 const total = columns.reduce((acc, col) => acc + (node.values[col] || 0), 0);
                                 return total === 0 ? '-' : total.toFixed(2);
