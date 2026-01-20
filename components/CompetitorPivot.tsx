@@ -8,20 +8,17 @@ import {
     Checkbox,
     Popover,
     ScrollArea,
-    Button,
     ActionIcon,
     Divider,
     TextInput,
     Badge,
-    Collapse,
     UnstyledButton,
     Stack,
-    Modal,
+    Tooltip,
     ThemeIcon,
-    Alert
+    Loader
 } from '@mantine/core';
-import { IconFilter, IconChevronRight, IconChevronDown, IconSearch, IconX, IconSparkles, IconInfoCircle } from '@tabler/icons-react';
-
+import { IconFilter, IconChevronRight, IconChevronDown, IconSearch, IconSparkles, IconHistory } from '@tabler/icons-react';
 
 interface Props {
     schedules: ScheduleRow[];
@@ -35,8 +32,15 @@ const KEY_BRAND = 'company_brand_name';
 const KEY_PRODUCT = 'other_product_name';
 const KEY_MD = 'other_md_name_1';
 
-const getValue = (row: ScheduleRow, key: string): string => {
-    return (row as any)[key] || '(미매핑)';
+// Brand Status Type
+type BrandStatus = {
+    found: boolean;
+    count: number;
+    details: any[]; // BrandBroadcastRow[]
+};
+
+type BrandCheckResult = {
+    [key: string]: BrandStatus;
 };
 
 // Header Filter Component
@@ -146,7 +150,6 @@ export default function CompetitorPivot({ schedules }: Props) {
 
         // Defined Order
         const PREFERRED_ORDER = ['현대홈쇼핑', 'GS홈쇼핑', '롯데홈쇼핑', 'CJ온스타일', 'CJ홈쇼핑', 'SK스토아', 'KT알파'];
-
         const MD_CAT_ORDER = ['주방', '가전', '리빙', '푸드', '건강식품', '여행', '보험', '일반렌탈', '대품렌탈', '의류', '잡화', '뷰티', '레포츠', '언더웨어', '브랜드패션', '미매핑', '(미매핑)', '(없음)'];
 
         // Convert to Arrays sorted
@@ -174,10 +177,9 @@ export default function CompetitorPivot({ schedules }: Props) {
         };
     }, [schedules]);
 
-    // 2. Filter State (All selected by default)
+    // 2. Filter State
     const [selectedFilters, setSelectedFilters] = useState<{ [key: string]: Set<string> }>({});
 
-    // Initialize state if empty
     // Initialize or Update state when data changes
     useEffect(() => {
         if (schedules.length > 0) {
@@ -192,8 +194,6 @@ export default function CompetitorPivot({ schedules }: Props) {
                 }
             });
 
-            // Fallback: if no valid mids, select all (or maybe user wants to see partial?)
-            // If validMids has items, use it. Else use all uniqueValues.mids
             const midsToSelect = validMids.size > 0 ? validMids : new Set(uniqueValues.mids);
 
             setSelectedFilters({
@@ -209,7 +209,6 @@ export default function CompetitorPivot({ schedules }: Props) {
         }
     }, [uniqueValues, schedules]);
 
-    // Handle Change
     const handleFilterChange = (key: string, set: Set<string>) => {
         setSelectedFilters(prev => ({ ...prev, [key]: set }));
     };
@@ -226,7 +225,6 @@ export default function CompetitorPivot({ schedules }: Props) {
             const p = row.other_product_name || '(미매핑)';
             const md = row.other_md_name_1 || '(미매핑)';
 
-            // Safe check: if key not in filter (not initialized?), assume true
             if (selectedFilters[KEY_BROADCASTER] && !selectedFilters[KEY_BROADCASTER].has(b)) return false;
             if (selectedFilters[KEY_MID] && !selectedFilters[KEY_MID].has(m)) return false;
             if (selectedFilters[KEY_SMALL] && !selectedFilters[KEY_SMALL].has(s)) return false;
@@ -238,21 +236,13 @@ export default function CompetitorPivot({ schedules }: Props) {
         });
     }, [schedules, selectedFilters]);
 
-    // 3.5 Deduplicate Data for Calculation
-    // Only applied for Competitor rows (where other_broad_name exists)
-    // Key: bd_date + other_broad_name + other_btime
+    // 3.5 Deduplicate Data
     const uniqueFilteredData = useMemo(() => {
         const uniqueMap = new Map<string, ScheduleRow>();
         const result: ScheduleRow[] = [];
 
         filteredData.forEach(row => {
-            // If it's Shinsegae (no other_broad_name), we usually treat it as unique or handle differently?
-            // But CompetitorPivot is mainly for Competitor analysis.
-            // If other_broad_name is missing, we just pass it through (or key it?)
-            // Shinsegae rows have 'bd_date' and 'bd_btime'.
-
             if (!row.other_broad_name) {
-                // Shinsegae row? Use id to be safe, or just pass
                 result.push(row);
             } else {
                 const key = `${row.bd_date}_${row.other_broad_name}_${row.other_btime}`;
@@ -266,17 +256,15 @@ export default function CompetitorPivot({ schedules }: Props) {
     }, [filteredData]);
 
     // 4. Pivot Logic
-    // Tree: Mid -> Small -> Brand
-    // Value: Sum(weights_time / 60) per Broadcaster
     type TreeItem = {
         name: string;
         isLeaf: boolean;
-        children?: Map<string, TreeItem>; // Map for fast lookup
-        values: { [broadcaster: string]: number }; // Sum
+        children?: Map<string, TreeItem>;
+        values: { [broadcaster: string]: number };
     };
 
     const tree = useMemo(() => {
-        const root = new Map<string, TreeItem>(); // Key: MD CAT
+        const root = new Map<string, TreeItem>();
 
         uniqueFilteredData.forEach(row => {
             const md = row.other_md_name_1 || '(미매핑)';
@@ -284,33 +272,25 @@ export default function CompetitorPivot({ schedules }: Props) {
             const small = row.other_sgroupn_name || '(미매핑)';
             const brand = row.company_brand_name || '(미매핑)';
             const broadcaster = row.other_broad_name || '(미매핑)';
-            const weight = (row.weights_time || 0) / 60; // Minutes to Hours
+            const weight = (row.weights_time || 0) / 60;
 
-            // 1. MD Node (Root)
-            if (!root.has(md)) {
-                root.set(md, { name: md, isLeaf: false, children: new Map(), values: {} });
-            }
+            // 1. MD
+            if (!root.has(md)) root.set(md, { name: md, isLeaf: false, children: new Map(), values: {} });
             const mdNode = root.get(md)!;
             mdNode.values[broadcaster] = (mdNode.values[broadcaster] || 0) + weight;
 
-            // 2. Mid Node
-            if (!mdNode.children!.has(mid)) {
-                mdNode.children!.set(mid, { name: mid, isLeaf: false, children: new Map(), values: {} });
-            }
+            // 2. Mid
+            if (!mdNode.children!.has(mid)) mdNode.children!.set(mid, { name: mid, isLeaf: false, children: new Map(), values: {} });
             const midNode = mdNode.children!.get(mid)!;
             midNode.values[broadcaster] = (midNode.values[broadcaster] || 0) + weight;
 
-            // 3. Small Node
-            if (!midNode.children!.has(small)) {
-                midNode.children!.set(small, { name: small, isLeaf: false, children: new Map(), values: {} });
-            }
+            // 3. Small
+            if (!midNode.children!.has(small)) midNode.children!.set(small, { name: small, isLeaf: false, children: new Map(), values: {} });
             const smallNode = midNode.children!.get(small)!;
             smallNode.values[broadcaster] = (smallNode.values[broadcaster] || 0) + weight;
 
-            // 4. Brand Node (Leaf)
-            if (!smallNode.children!.has(brand)) {
-                smallNode.children!.set(brand, { name: brand, isLeaf: true, values: {} });
-            }
+            // 4. Brand
+            if (!smallNode.children!.has(brand)) smallNode.children!.set(brand, { name: brand, isLeaf: true, values: {} });
             const brandNode = smallNode.children!.get(brand)!;
             brandNode.values[broadcaster] = (brandNode.values[broadcaster] || 0) + weight;
         });
@@ -318,38 +298,31 @@ export default function CompetitorPivot({ schedules }: Props) {
         return root;
     }, [uniqueFilteredData]);
 
-    // 5. Sorted Columns (Only visible broadcasters based on selection OR data?)
+    // 5. Sorted Columns
     const columns = useMemo(() => {
         const list = uniqueValues.broadcasters;
         if (!selectedFilters[KEY_BROADCASTER]) return list;
         return list.filter(b => selectedFilters[KEY_BROADCASTER].has(b));
     }, [uniqueValues.broadcasters, selectedFilters]);
 
-    // 7. Calculate Top 5 Roots (MD Cats) for Ranking
+    // 7. Calculate Top 5 Roots
     const top5Roots = useMemo(() => {
         const rootTotals: { name: string, total: number }[] = [];
         tree.forEach((node) => {
-            // Calculate total for visible columns only
             const total = columns.reduce((acc, col) => acc + (node.values[col] || 0), 0);
             rootTotals.push({ name: node.name, total });
         });
-
-        // Sort descending
         rootTotals.sort((a, b) => b.total - a.total);
 
-        // Take top 5 and map to rank (1-based)
         const rankMap = new Map<string, number>();
         rootTotals.slice(0, 5).forEach((item, index) => {
-            if (item.total > 0) { // Only rank if total > 0
-                rankMap.set(item.name, index + 1);
-            }
+            if (item.total > 0) rankMap.set(item.name, index + 1);
         });
         return rankMap;
     }, [tree, columns]);
 
     // 6. Expansion State
     const [expanded, setExpanded] = useState<Set<string>>(new Set());
-
 
     const toggleExpand = (id: string) => {
         const newSet = new Set(expanded);
@@ -358,8 +331,58 @@ export default function CompetitorPivot({ schedules }: Props) {
         setExpanded(newSet);
     };
 
-    // Render Row Helper
-    const renderRows = (nodes: Map<string, TreeItem>, level: number, parentId: string) => {
+    // --- Brand Status Checking Logic ---
+    const [brandStatus, setBrandStatus] = useState<BrandCheckResult>({});
+    const [checkingBrands, setCheckingBrands] = useState(false);
+
+    useEffect(() => {
+        const checkBrands = async () => {
+            const targets: { md: string, mid: string, small: string, brand: string }[] = [];
+            const seen = new Set<string>();
+
+            uniqueFilteredData.forEach(row => {
+                const md = row.other_md_name_1;
+                const mid = row.other_mgroupn_name;
+                const small = row.other_sgroupn_name;
+                const brand = row.company_brand_name;
+
+                if (md && mid && small && brand) {
+                    const key = `${md}|${mid}|${small}|${brand}`;
+                    if (!seen.has(key)) {
+                        seen.add(key);
+                        targets.push({ md, mid, small, brand });
+                    }
+                }
+            });
+
+            if (targets.length === 0) return;
+
+            setCheckingBrands(true);
+            try {
+                const response = await fetch('/api/brands/check', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ searches: targets })
+                });
+                const data = await response.json();
+                if (data.results) {
+                    setBrandStatus(data.results);
+                }
+            } catch (err) {
+                console.error("Failed to check brands", err);
+            } finally {
+                setCheckingBrands(false);
+            }
+        };
+
+        const timer = setTimeout(() => {
+            checkBrands();
+        }, 1000);
+
+        return () => clearTimeout(timer);
+    }, [uniqueFilteredData]);
+
+    const renderRowsWithStatus = (nodes: Map<string, TreeItem>, level: number, pathContext: { md: string, mid: string, small: string }) => {
         const MD_CAT_ORDER = ['주방', '가전', '리빙', '푸드', '건강식품', '여행', '보험', '일반렌탈', '대품렌탈', '의류', '잡화', '뷰티', '레포츠', '언더웨어', '브랜드패션', '미매핑', '(미매핑)', '(없음)'];
 
         const sortedNodes = Array.from(nodes.values()).sort((a, b) => {
@@ -374,32 +397,76 @@ export default function CompetitorPivot({ schedules }: Props) {
         });
 
         return sortedNodes.map(node => {
-            const id = parentId ? `${parentId}-${node.name}` : node.name;
+            const newContext = { ...pathContext };
+            if (level === 0) newContext.md = node.name;
+            else if (level === 1) newContext.mid = node.name;
+            else if (level === 2) newContext.small = node.name;
+
+            const id = [pathContext.md, pathContext.mid, pathContext.small, node.name].filter(Boolean).join('-');
             const isExpanded = expanded.has(id);
             const indent = level * 20;
-
             const hasChildren = !node.isLeaf && node.children && node.children.size > 0;
 
-            // Ranking Logic (Only for Level 0)
             const rank = (level === 0) ? top5Roots.get(node.name) : undefined;
-            let rowBg = level === 0 ? '#f8f9fa' : (level === 1 ? '#fff' : '#fafafa'); // Default
-            let badge = null;
-
+            let rowBg = level === 0 ? '#f8f9fa' : (level === 1 ? '#fff' : '#fafafa');
             if (rank) {
-                if (rank === 1) {
-                    rowBg = '#fff9db';
-                    badge = <Badge color="yellow" variant="filled" size="xs" circle style={{ width: 16, height: 16, minWidth: 16, padding: 0 }}>{rank}</Badge>;
-                }
-                else if (rank === 2) {
-                    rowBg = '#f1f3f5';
-                    badge = <Badge color="gray" variant="filled" size="xs" circle style={{ width: 16, height: 16, minWidth: 16, padding: 0 }}>{rank}</Badge>;
-                }
-                else if (rank === 3) {
-                    rowBg = '#fff4e6';
-                    badge = <Badge color="orange" variant="filled" size="xs" circle style={{ width: 16, height: 16, minWidth: 16, padding: 0 }}>{rank}</Badge>;
-                }
-                else {
-                    badge = <Badge color="blue" variant="filled" size="xs" circle style={{ width: 16, height: 16, minWidth: 16, padding: 0 }}>{rank}</Badge>;
+                if (rank === 1) rowBg = '#fff9db';
+                else if (rank === 2) rowBg = '#f1f3f5';
+                else if (rank === 3) rowBg = '#fff4e6';
+            }
+
+            let badge = null;
+            if (rank) {
+                badge = <Badge color={rank <= 3 ? (rank === 1 ? "yellow" : (rank === 2 ? "gray" : "orange")) : "blue"} variant="filled" size="xs" circle style={{ width: 16, height: 16, minWidth: 16, padding: 0 }}>{rank}</Badge>;
+            }
+
+            // Brand Status Check (Level 3)
+            let brandElement = <Text size="sm" fw={level === 0 ? 700 : (level === 1 ? 500 : 400)}>{node.name}</Text>;
+
+            if (level === 3) {
+                const key = `${newContext.md}|${newContext.mid}|${newContext.small}|${node.name}`;
+                const status = brandStatus[key];
+
+                if (status) {
+                    if (!status.found) {
+                        brandElement = (
+                            <Tooltip label="당사 브랜드 DB에 없는 브랜드입니다." withArrow>
+                                <Group gap={4}>
+                                    <Text size="sm" c="dimmed" style={{ textDecoration: 'line-through' }}>{node.name}</Text>
+                                    <Badge size="xs" color="gray" variant="light">미운영</Badge>
+                                </Group>
+                            </Tooltip>
+                        );
+                    } else {
+                        brandElement = (
+                            <Popover width={400} position="bottom-start" withArrow shadow="md">
+                                <Popover.Target>
+                                    <Group gap={4} style={{ cursor: 'pointer' }}>
+                                        <Text size="sm" c="blue" fw={500}>{node.name}</Text>
+                                        <ThemeIcon size="xs" variant="light" color="blue"><IconHistory size={10} /></ThemeIcon>
+                                    </Group>
+                                </Popover.Target>
+                                <Popover.Dropdown>
+                                    <Text size="xs" fw={700} mb="xs">당사 방송 이력 ({status.count}건)</Text>
+                                    <ScrollArea.Autosize mah={200}>
+                                        <Table striped highlightOnHover withTableBorder variant="vertical">
+                                            <Table.Tbody>
+                                                {status.details.slice(0, 50).map((d: any, i: number) => (
+                                                    <Table.Tr key={i}>
+                                                        <Table.Td style={{ fontSize: 11 }}>
+                                                            <div>{d.bd_date} {d.bd_btime}~{d.bd_etime}</div>
+                                                            <div style={{ fontWeight: 600 }}>{d.prog_name}</div>
+                                                            <div style={{ color: 'gray' }}>{d.goods_name}</div>
+                                                        </Table.Td>
+                                                    </Table.Tr>
+                                                ))}
+                                            </Table.Tbody>
+                                        </Table>
+                                    </ScrollArea.Autosize>
+                                </Popover.Dropdown>
+                            </Popover>
+                        );
+                    }
                 }
             }
 
@@ -413,10 +480,8 @@ export default function CompetitorPivot({ schedules }: Props) {
                                         {isExpanded ? <IconChevronDown size={14} /> : <IconChevronRight size={14} />}
                                     </UnstyledButton>
                                 )}
-                                <Text size="sm" fw={level === 0 ? 700 : (level === 1 ? 500 : 400)}>
-                                    {node.name}
-                                </Text>
-                                {badge && <Box style={{ display: 'flex' }}>{badge}</Box>}
+                                {badge && <Box>{badge}</Box>}
+                                {brandElement}
                             </Group>
                         </Table.Td>
                         {columns.map(col => {
@@ -434,17 +499,14 @@ export default function CompetitorPivot({ schedules }: Props) {
                             })()}
                         </Table.Td>
                     </Table.Tr>
-                    {hasChildren && isExpanded && renderRows(node.children!, level + 1, id)}
+                    {hasChildren && isExpanded && renderRowsWithStatus(node.children!, level + 1, newContext)}
                 </MantineFragment>
             );
         });
     };
 
-    // Global Filter Bar (Product & MD)
-    // "상단에 배치"
     return (
         <Stack gap="sm" align="stretch" style={{ height: '100%', overflow: 'hidden' }}>
-            {/* Global Filters */}
             <Group>
                 <Box style={{ width: 200 }}>
                     <FilterHeader
@@ -500,6 +562,7 @@ export default function CompetitorPivot({ schedules }: Props) {
                                             onChange={(s) => handleFilterChange(KEY_BRAND, s)}
                                         />
                                     </Box>
+                                    {checkingBrands && <IconSparkles size={16} className="mantine-rotate" style={{ marginLeft: 4 }} />}
                                 </Group>
                             </Table.Th>
                             {columns.map(col => (
@@ -513,7 +576,7 @@ export default function CompetitorPivot({ schedules }: Props) {
                         </Table.Tr>
                     </Table.Thead>
                     <Table.Tbody>
-                        {renderRows(tree, 0, '')}
+                        {renderRowsWithStatus(tree, 0, { md: '', mid: '', small: '' })}
                         {Array.from(tree.keys()).length === 0 && (
                             <Table.Tr>
                                 <Table.Td colSpan={columns.length + 2} style={{ textAlign: 'center', padding: 20 }}>
@@ -554,7 +617,4 @@ export default function CompetitorPivot({ schedules }: Props) {
     );
 }
 
-
-
-// Helper component for fragment to avoid key warning issues with map
 const MantineFragment = ({ children }: { children: React.ReactNode }) => <>{children}</>;

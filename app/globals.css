@@ -3,10 +3,25 @@
 
 :root {
   --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 244, 244, 245; /* Light Gray for dashboard background */
+  --background-start-rgb: 244, 244, 245;
+  /* Light Gray for dashboard background */
 }
 
 body {
   background-color: #f8f9fa;
   color: #212529;
+}
+
+@keyframes mantine-rotate {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.mantine-rotate {
+  animation: mantine-rotate 1s linear infinite;
 }
