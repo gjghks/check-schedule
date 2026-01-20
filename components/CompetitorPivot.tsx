@@ -22,6 +22,7 @@ import { IconFilter, IconChevronRight, IconChevronDown, IconSearch, IconSparkles
 
 interface Props {
     schedules: ScheduleRow[];
+    onItemClick?: (item: ScheduleRow) => void;
 }
 
 // Data Keys
@@ -127,7 +128,7 @@ const FilterHeader = ({ label, values, selected, onChange }: FilterHeaderProps) 
     );
 };
 
-export default function CompetitorPivot({ schedules }: Props) {
+export default function CompetitorPivot({ schedules, onItemClick }: Props) {
     // 1. Extract Full Lists for Filters
     const uniqueValues = useMemo(() => {
         const sets = {
@@ -516,12 +517,47 @@ export default function CompetitorPivot({ schedules }: Props) {
                 if (status) {
                     if (!status.found) {
                         contentElement = (
-                            <Tooltip label="당사 브랜드 DB에 없는 브랜드입니다." withArrow>
-                                <Group gap={4}>
-                                    <Text size="sm" c="dimmed" style={{ textDecoration: 'line-through' }}>{node.name}</Text>
-                                    <Badge size="xs" color="gray" variant="light">미운영</Badge>
-                                </Group>
-                            </Tooltip>
+                            <Popover width={500} position="bottom-start" withArrow shadow="md">
+                                <Popover.Target>
+                                    <Group gap={4} style={{ cursor: 'pointer' }}>
+                                        <Text size="sm" c="dimmed">{node.name}</Text>
+                                        <Badge size="xs" color="gray" variant="light">미운영</Badge>
+                                    </Group>
+                                </Popover.Target>
+                                <Popover.Dropdown>
+                                    <Text size="xs" fw={700} mb="xs">경쟁사 편성 이력 (해당 기간)</Text>
+                                    <ScrollArea.Autosize mah={300}>
+                                        <Table striped highlightOnHover withTableBorder variant="vertical">
+                                            <Table.Tbody>
+                                                {uniqueFilteredData
+                                                    .filter(r =>
+                                                        r.other_md_name_1 === newContext.md &&
+                                                        r.other_mgroupn_name === newContext.mid &&
+                                                        r.other_sgroupn_name === newContext.small &&
+                                                        r.company_brand_name === node.name
+                                                    )
+                                                    .sort((a, b) => (a.bd_date || '').localeCompare(b.bd_date || ''))
+                                                    .map((row, i) => (
+                                                        <Table.Tr
+                                                            key={i}
+                                                            style={{ cursor: 'pointer' }}
+                                                            onClick={() => onItemClick && onItemClick(row)}
+                                                        >
+                                                            <Table.Td style={{ fontSize: 11 }}>
+                                                                <Group justify="space-between" mb={2}>
+                                                                    <Text span fw={700} c="blue">{row.other_broad_name}</Text>
+                                                                    <Text span c="dimmed">{row.bd_date} {row.other_btime}~{row.other_etime}</Text>
+                                                                </Group>
+                                                                <div style={{ fontWeight: 600 }}>{row.other_product_name}</div>
+                                                                {row.product_sale_price && <div style={{ color: 'gray' }}>판매가: {row.product_sale_price.toLocaleString()}원</div>}
+                                                            </Table.Td>
+                                                        </Table.Tr>
+                                                    ))}
+                                            </Table.Tbody>
+                                        </Table>
+                                    </ScrollArea.Autosize>
+                                </Popover.Dropdown>
+                            </Popover>
                         );
                     } else {
                         contentElement = (
@@ -601,6 +637,10 @@ export default function CompetitorPivot({ schedules }: Props) {
                         onChange={(s) => handleFilterChange(KEY_PRODUCT, s)}
                     />
                 </Box>
+                <Text size="xs" c="dimmed" style={{ display: 'flex', alignItems: 'center' }}>
+                    <Text span fw={700} mr={4}>* 미운영 판단 기준:</Text>
+                    당사에서 25년 1월 1일부터 현재까지 운영중인 브랜드중 미운영인 경쟁사 브랜드.
+                </Text>
             </Group>
 
             <ScrollArea style={{ flex: 1 }} type="auto">

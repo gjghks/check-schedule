@@ -238,7 +238,7 @@ export default function ScheduleDashboard({ schedules, availableDates, currentDa
                                 주간 편성 상세
                             </Tabs.Tab>
                             <Tabs.Tab value="competitor" color="blue">
-                                경쟁사 편성 분석
+                                미운영 브랜드 현황
                             </Tabs.Tab>
                         </Tabs.List>
                     </Tabs>
@@ -306,7 +306,13 @@ export default function ScheduleDashboard({ schedules, availableDates, currentDa
 
                 {/* 1. Competitor Schedule Analysis Tab Content */}
                 <Box style={{ display: activeTab === 'competitor' ? 'flex' : 'none', flexDirection: 'column', height: 'calc(100vh - 110px)', padding: '10px 20px 20px 20px' }}>
-                    <CompetitorPivot schedules={schedules} />
+                    <CompetitorPivot
+                        schedules={schedules}
+                        onItemClick={(item) => {
+                            setSelectedItemState({ item, isShinsegae: false });
+                            openModal();
+                        }}
+                    />
                 </Box>
 
                 {/* 2. Weekly Schedule Analysis Tab Content */}
