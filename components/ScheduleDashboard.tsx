@@ -20,9 +20,11 @@ import {
     SegmentedControl,
     Alert,
     Image,
+    MultiSelect,
+    TextInput,
 } from '@mantine/core';
 import { DatePickerInput } from '@mantine/dates';
-import { IconBell, IconCalendar, IconChevronLeft, IconChevronRight, IconChevronDown, IconChevronUp, IconSparkles } from '@tabler/icons-react';
+import { IconBell, IconCalendar, IconChevronLeft, IconChevronRight, IconChevronDown, IconChevronUp, IconSparkles, IconSearch } from '@tabler/icons-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer } from 'recharts';
 import { useRouter } from 'next/navigation';
 import { useDisclosure } from '@mantine/hooks';
@@ -84,6 +86,56 @@ export default function ScheduleDashboard({ schedules, availableDates, currentDa
     const [activeTab, setActiveTab] = useState<string | null>('ratio');
     const [weeklySubTab, setWeeklySubTab] = useState<'duplicate' | 'all'>('duplicate');
 
+    // -------------------------------------------------------------------------------
+    // FILTER STATE (Weekly Tab)
+    // -------------------------------------------------------------------------------
+    const allCategories = useMemo(() => {
+        const apps = new Set<string>();
+        schedules.forEach(s => {
+            // Shinsegae
+            if (s.md_name) apps.add(s.md_name);
+            // Competitors
+            const cCat = s.other_md_name_1 || s.other_md_name_2;
+            if (cCat) apps.add(cCat);
+        });
+        // Exclude '모바일상품1'
+        if (apps.has('모바일상품1')) {
+            apps.delete('모바일상품1');
+        }
+        return Array.from(apps).filter(Boolean).sort();
+    }, [schedules]);
+
+    const [selectedCompetitors, setSelectedCompetitors] = useState<string[]>(CHANNELS.map(c => c.name));
+    const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+    const [searchQuery, setSearchQuery] = useState<string>('');
+
+    // Initialize categories with all available when loaded
+    useEffect(() => {
+        // Only set if empty (initial load) to avoid overwriting user selection re-renders? 
+        // Actually, if data updates, we might want to sync. 
+        // But for now, let's stick to simple init.
+        // Also ensure '모바일상품1' is not selected if it was somehow.
+        if (allCategories.length > 0 && selectedCategories.length === 0) {
+            setSelectedCategories(allCategories);
+        }
+    }, [allCategories]); // Removed selectedCategories dependency to avoid loops, though standard check handles it.
+
+    const handleCompetitorFilterChange = (val: string[]) => {
+        // If user deselects all, we keep it empty (show nothing) or user might want "All"?
+        // Usually empty means empty.
+        setSelectedCompetitors(val);
+    };
+
+    const selectAllCompetitors = () => {
+        setSelectedCompetitors(CHANNELS.map(c => c.name));
+    };
+
+    const selectAllCategories = () => {
+        setSelectedCategories(allCategories);
+    };
+
+    // -------------------------------------------------------------------------------
+
     // Range Picker State for Competitor Tab
     const [rangeValue, setRangeValue] = useState<[Date | null, Date | null]>([
         viewRange ? dayjs(viewRange.start.replace(/\//g, '-')).toDate() : null,
@@ -123,32 +175,81 @@ export default function ScheduleDashboard({ schedules, availableDates, currentDa
         // I should use chunks carefully.
 
         schedules.forEach(row => {
+            // Filter Logic
+            // ---------------------------------------------------
             // 1. Shinsegae Item (Uses BD_DATE)
             if (row.bd_btime) {
-                const sDate = row.bd_date;
-                if (map.has(sDate)) {
-                    const hourMap = map.get(sDate)!;
-                    const sTimeStr = row.bd_btime;
-                    const sHour = parseInt(sTimeStr.split(':')[0], 10);
-                    if (!hourMap.has(sHour)) hourMap.set(sHour, []);
-                    hourMap.get(sHour)!.push({ isShinsegae: true, item: row });
+                // Apply Filters for Shinsegae Side
+                const channelName = 'Shinsegae';
+                const mdName = row.md_name || '';
+
+                const isChannelSelected = selectedCompetitors.includes(channelName);
+                const isCatSelected = selectedCategories.includes(mdName);
+
+                // Search Query Check
+                const query = searchQuery.trim().toLowerCase();
+                let isSearchMatch = true;
+                if (query) {
+                    const pName = (row.g_prog_name || '').toLowerCase();
+                    const cName = (mdName || '').toLowerCase();
+                    // Shinsegae usually doesn't have other_item_desc in the same way, but checking logic:
+                    // Only check product name and category for Shinsegae as they are "our" items.
+                    if (!pName.includes(query) && !cName.includes(query)) {
+                        isSearchMatch = false;
+                    }
+                }
+
+                if (isChannelSelected && isCatSelected && isSearchMatch) {
+                    const sDate = row.bd_date;
+                    if (map.has(sDate)) {
+                        const hourMap = map.get(sDate)!;
+                        const sTimeStr = row.bd_btime;
+                        const sHour = parseInt(sTimeStr.split(':')[0], 10);
+                        if (!hourMap.has(sHour)) hourMap.set(sHour, []);
+                        hourMap.get(sHour)!.push({ isShinsegae: true, item: row });
+                    }
                 }
             }
 
             // 2. Competitor Item (Uses BD_EDATE)
             if (row.other_broad_name) {
-                const cDate = row.bd_edate || row.bd_date; // Use BD_EDATE as requested
-                if (map.has(cDate)) {
-                    const hourMap = map.get(cDate)!;
-                    const cTimeStr = row.other_btime || '00:00:00';
-                    const cHour = parseInt(cTimeStr.split(':')[0], 10);
-                    if (!hourMap.has(cHour)) hourMap.set(cHour, []);
-                    hourMap.get(cHour)!.push({ isShinsegae: false, item: row });
+                // Apply Filters for Competitor Side
+                const channelName = row.other_broad_name;
+                const visibleCat = row.other_md_name_1 || row.other_md_name_2 || '';
+
+                const isChannelSelected = selectedCompetitors.includes(channelName);
+                // Match ONLY the visible category
+                const isCatSelected = selectedCategories.includes(visibleCat);
+
+                // Search Query Check
+                const query = searchQuery.trim().toLowerCase();
+                let isSearchMatch = true;
+                if (query) {
+                    const pName = (row.other_product_name || '').toLowerCase();
+                    const catName = (visibleCat || '').toLowerCase();
+                    const channel = (channelName || '').toLowerCase();
+                    // Include description? "Content included" -> Maybe. Let's add description for completeness as per request "content".
+                    const desc = (row.other_item_desc || '').toLowerCase();
+
+                    if (!pName.includes(query) && !catName.includes(query) && !channel.includes(query) && !desc.includes(query)) {
+                        isSearchMatch = false;
+                    }
+                }
+
+                if (isChannelSelected && isCatSelected && isSearchMatch) {
+                    const cDate = row.bd_edate || row.bd_date; // Use BD_EDATE as requested
+                    if (map.has(cDate)) {
+                        const hourMap = map.get(cDate)!;
+                        const cTimeStr = row.other_btime || '00:00:00';
+                        const cHour = parseInt(cTimeStr.split(':')[0], 10);
+                        if (!hourMap.has(cHour)) hourMap.set(cHour, []);
+                        hourMap.get(cHour)!.push({ isShinsegae: false, item: row });
+                    }
                 }
             }
         });
         return map;
-    }, [schedules, weekRange]);
+    }, [schedules, weekRange, selectedCompetitors, selectedCategories, searchQuery]);
 
     // Navigate Week
     const moveWeek = (dir: 'prev' | 'next') => {
@@ -178,6 +279,12 @@ export default function ScheduleDashboard({ schedules, availableDates, currentDa
         } else {
             router.push(`/?date=${todayStr}`);
         }
+    };
+
+    // Reset Filters Helper
+    const resetFilters = () => {
+        setSelectedCompetitors(CHANNELS.map(c => c.name));
+        setSelectedCategories(allCategories);
     };
 
     // ... renderItem ... (no change needed in logic, but need to preserve code if replacing full body)
@@ -317,6 +424,68 @@ export default function ScheduleDashboard({ schedules, availableDates, currentDa
 
                 {/* 2. Weekly Schedule Analysis Tab Content */}
                 <Box style={{ display: activeTab === 'weekly' ? 'flex' : 'none', flexDirection: 'column', height: 'calc(100vh - 110px)', paddingTop: 10 }}>
+
+                    {/* Filters */}
+                    <Group px={20} mb={10} style={{ zIndex: 20 }} align="flex-end" wrap="nowrap">
+                        <MultiSelect
+                            data={CHANNELS.map(c => ({ value: c.name, label: c.label }))}
+                            value={selectedCompetitors}
+                            onChange={handleCompetitorFilterChange}
+                            label={
+                                <Group justify="space-between" mb={3}>
+                                    <Text size="sm" fw={500}>경쟁사 선택</Text>
+                                    <Text
+                                        size="xs"
+                                        c="blue"
+                                        style={{ cursor: 'pointer', textDecoration: 'underline' }}
+                                        onClick={selectAllCompetitors}
+                                    >
+                                        전체
+                                    </Text>
+                                </Group>
+                            }
+                            placeholder="전체 선택됨"
+                            searchable
+                            clearable
+                            size="xs"
+                            style={{ minWidth: 200, flex: '1 1 auto' }}
+                        />
+                        <MultiSelect
+                            data={allCategories}
+                            value={selectedCategories}
+                            onChange={setSelectedCategories}
+                            label={
+                                <Group justify="space-between" mb={3}>
+                                    <Text size="sm" fw={500}>MD CAT 선택</Text>
+                                    <Text
+                                        size="xs"
+                                        c="blue"
+                                        style={{ cursor: 'pointer', textDecoration: 'underline' }}
+                                        onClick={selectAllCategories}
+                                    >
+                                        전체
+                                    </Text>
+                                </Group>
+                            }
+                            placeholder="전체 선택됨"
+                            searchable
+                            clearable
+                            size="xs"
+                            style={{ minWidth: 200, flex: '1 1 auto' }}
+                        />
+                        <TextInput
+                            placeholder="검색어 입력 (상품명, 카테고리 등)"
+                            value={searchQuery}
+                            onChange={(event) => setSearchQuery(event.currentTarget.value)}
+                            leftSection={<IconSearch size={14} />}
+                            size="xs"
+                            style={{ minWidth: 200, flex: '1 1 auto' }}
+                            label={
+                                <Text size="sm" fw={500} mb={3}>검색</Text>
+                            }
+                        />
+                    </Group>
+
                     <Box style={{ overflow: 'auto', flex: 1, paddingBottom: 20, paddingLeft: 20, paddingRight: 20 }}>
                         <Box style={{ minWidth: 1000, display: 'flex', flexDirection: 'column' }}>
                             {/* Header Row (Time + Mon-Sun) */}
@@ -422,7 +591,17 @@ export default function ScheduleDashboard({ schedules, availableDates, currentDa
                     const { item: selectedItem, isShinsegae } = selectedItemState;
                     const productName = isShinsegae ? (selectedItem.g_prog_name || '방송정보없음') : (selectedItem.other_product_name || '상품명 없음');
                     const isAlert = !isShinsegae && (((selectedItem.sche_sml_score || 0) >= 6) || ((selectedItem.item_sml_score || 0) >= 1.5));
-                    const description = selectedItem.other_item_desc || '설명 없음';
+
+                    // Clean Description: Remove Shinsegae Info
+                    // Logic: Keep everything starting from "▶ 경쟁 편성" (Competitor Schedule Info)
+                    // This effectively removes the preceding Shinsegae schedule info (Date, Time, Program)
+                    let description = selectedItem.other_item_desc || '설명 없음';
+                    const separator = '▶ 경쟁 편성';
+                    if (description.includes(separator)) {
+                        const idx = description.indexOf(separator);
+                        description = description.substring(idx);
+                    }
+
                     const price = selectedItem.product_sale_price || 0;
 
                     // Time Calculation
