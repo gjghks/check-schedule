@@ -34,14 +34,14 @@ export async function searchBrand(
     brand: string
 ): Promise<BrandBroadcastRow[]> {
     const db = await getBrandsDb();
-    // Use exact matching as requested
+    // Use brand_name and md_name for matching
+    // Relaxing Mid/Small category checks as they often differ between properities
     const query = `
         SELECT * FROM shinsegae_brands 
         WHERE md_name = ? 
-        AND mgroupn_name = ? 
-        AND sgroupn_name = ? 
         AND brand_name = ?
         ORDER BY bd_date DESC, bd_btime DESC
     `;
-    return db.all<BrandBroadcastRow[]>(query, [md, mid, small, brand]);
+    return db.all<BrandBroadcastRow[]>(query, [md, brand]);
 }
+
