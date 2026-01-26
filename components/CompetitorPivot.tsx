@@ -22,7 +22,7 @@ import { IconFilter, IconChevronRight, IconChevronDown, IconSearch, IconSparkles
 
 interface Props {
     schedules: ScheduleRow[];
-    onItemClick?: (item: ScheduleRow) => void;
+    onItemClick?: (item: ScheduleRow, isShinsegae?: boolean) => void;
 }
 
 // Data Keys
@@ -574,7 +574,29 @@ export default function CompetitorPivot({ schedules, onItemClick }: Props) {
                                         <Table striped highlightOnHover withTableBorder variant="vertical">
                                             <Table.Tbody>
                                                 {status.details.slice(0, 50).map((d: any, i: number) => (
-                                                    <Table.Tr key={i}>
+                                                    <Table.Tr
+                                                        key={i}
+                                                        style={{ cursor: 'pointer' }}
+                                                        onClick={() => {
+                                                            if (onItemClick) {
+                                                                // Map BrandBroadcastRow to ScheduleRow structure for the popup
+                                                                const mapped: any = {
+                                                                    id: d.id,
+                                                                    bd_date: d.bd_date,
+                                                                    bd_btime: d.bd_btime,
+                                                                    bd_etime: d.bd_etime,
+                                                                    g_prog_name: d.prog_name,
+                                                                    md_name: d.md_name,
+                                                                    mgroupn_name: d.mgroupn_name,
+                                                                    sgroupn_name: d.sgroupn_name,
+                                                                    brand_name: d.brand_name,
+                                                                    other_product_name: d.goods_name, // Fallback for display if needed
+                                                                    other_item_desc: d.goods_name,
+                                                                };
+                                                                onItemClick(mapped, true);
+                                                            }
+                                                        }}
+                                                    >
                                                         <Table.Td style={{ fontSize: 11 }}>
                                                             <div>{d.bd_date} {d.bd_btime}~{d.bd_etime}</div>
                                                             <div style={{ fontWeight: 600 }}>{d.prog_name}</div>
@@ -638,8 +660,8 @@ export default function CompetitorPivot({ schedules, onItemClick }: Props) {
                     />
                 </Box>
                 <Text size="xs" c="dimmed" style={{ display: 'flex', alignItems: 'center' }}>
-                    <Text span fw={700} mr={4}>* 미운영 판단 기준:</Text>
-                    당사에서 25년 1월 1일부터 현재까지 운영중인 브랜드중 미운영인 경쟁사 브랜드.
+                    <Text span fw={700} mr={4}>* 미운영 판단 기준 :</Text>
+                    경쟁사 방송 상품 브랜드 중 당사에 없는 브랜드 (2025년 1월 ~ 현재까지 당사 방송상품 기준)
                 </Text>
             </Group>
 

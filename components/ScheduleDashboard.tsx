@@ -415,8 +415,8 @@ export default function ScheduleDashboard({ schedules, availableDates, currentDa
                 <Box style={{ display: activeTab === 'competitor' ? 'flex' : 'none', flexDirection: 'column', height: 'calc(100vh - 110px)', padding: '10px 20px 20px 20px' }}>
                     <CompetitorPivot
                         schedules={schedules}
-                        onItemClick={(item) => {
-                            setSelectedItemState({ item, isShinsegae: false });
+                        onItemClick={(item, isShinsegae = false) => {
+                            setSelectedItemState({ item, isShinsegae });
                             openModal();
                         }}
                     />
