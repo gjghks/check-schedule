@@ -1,32 +1,25 @@
 import pandas as pd
-import os
+import sys
 
-files = ['data/260105_tb_ai_sche_comp_sml_rslt.xlsx', 'data/2512_competitor_ratio.xlsx']
-
-for f in files:
-    if not os.path.exists(f):
-        print(f"File not found: {f}")
-        continue
-        
-    print(f"\nScanning {f}...")
+def check_date_range(file_path):
+    print(f"Reading {file_path}...")
     try:
-        # Read header to infer structure
-        df_head = pd.read_excel(f, nrows=5)
-        print("Columns:", df_head.columns.tolist())
-        
-        if 'tb_ai_sche' in f:
-            # Detailed file
-            # Read just dates to check range
-            df = pd.read_excel(f, usecols=['BD_DATE'])
-            print("Row count:", len(df))
-            print("Min Date:", df['BD_DATE'].min())
-            print("Max Date:", df['BD_DATE'].max())
-        else:
-            # Competitor ratio file
-            # Check if there are any sheets that might contain details
-            xl = pd.ExcelFile(f)
-            print("Sheets:", xl.sheet_names)
-            # Maybe reading the main sheet to see if there are hidden columns or rows with item names?
-             
+        df = pd.read_excel(file_path)
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"Error reading {file_path}: {e}")
+        return
+
+    if 'BD_DATE' in df.columns:
+        dates = pd.to_datetime(df['BD_DATE'], errors='coerce')
+        min_date = dates.min()
+        max_date = dates.max()
+        print(f"Date Range in {file_path}: {min_date} to {max_date}")
+        print(f"Unique dates count: {df['BD_DATE'].nunique()}")
+    else:
+        print("BD_DATE column not found.")
+
+if __name__ == "__main__":
+    if len(sys.argv) > 1:
+        check_date_range(sys.argv[1])
+    else:
+        print("Usage: python3 check_dates.py <excel_file>")
